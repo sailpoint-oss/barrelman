@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/dlclark/regexp2 v1.11.5
-	github.com/sailpoint-oss/navigator v0.1.0
+	github.com/sailpoint-oss/navigator v0.1.1
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/tree-sitter/go-tree-sitter v0.25.0
 	github.com/vmware-labs/yaml-jsonpath v0.3.2

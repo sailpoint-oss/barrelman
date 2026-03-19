@@ -31,7 +31,6 @@ paths:
 }
 
 func TestOAS3ValidMediaExample_TypeMismatch(t *testing.T) {
-	t.Skip("requires navigator to populate MediaType.Example from response content")
 	rule := registeredRule("oas3-valid-media-example")
 
 	btesting.Run(t, rule, btesting.Case{
@@ -58,7 +57,6 @@ paths:
 }
 
 func TestOAS3ValidMediaExample_EnumMismatch(t *testing.T) {
-	t.Skip("requires navigator to populate MediaType.Example from response content")
 	rule := registeredRule("oas3-valid-media-example")
 
 	btesting.Run(t, rule, btesting.Case{
@@ -110,7 +108,6 @@ paths:
 }
 
 func TestOAS3ValidMediaExample_RequestBody(t *testing.T) {
-	t.Skip("requires navigator to populate MediaType.Example from request body content")
 	rule := registeredRule("oas3-valid-media-example")
 
 	btesting.Run(t, rule, btesting.Case{
@@ -157,7 +154,6 @@ components:
 }
 
 func TestOAS3ValidSchemaExample_TypeMismatch(t *testing.T) {
-	t.Skip("requires navigator to populate Schema.Example")
 	rule := registeredRule("oas3-valid-schema-example")
 
 	btesting.Run(t, rule, btesting.Case{
@@ -179,7 +175,6 @@ components:
 }
 
 func TestOAS3ValidSchemaExample_EnumMismatch(t *testing.T) {
-	t.Skip("requires navigator to populate Schema.Example and Schema.Enum")
 	rule := registeredRule("oas3-valid-schema-example")
 
 	btesting.Run(t, rule, btesting.Case{
