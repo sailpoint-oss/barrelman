@@ -63,7 +63,7 @@ func registerUnresolvedRef(reg *barrelman.Registry) {
 }
 
 func findClosestRef(target string, idx *navigator.Index) string {
-	if idx.Document.Components == nil {
+	if idx.Document == nil || idx.Document.Components == nil {
 		return ""
 	}
 
