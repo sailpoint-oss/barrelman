@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode"
 
-	navigator "github.com/LukasParke/navigator"
+	navigator "github.com/sailpoint-oss/navigator"
 )
 
 // ValidationResult describes the outcome of a single validator check.

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	navigator "github.com/LukasParke/navigator"
+	navigator "github.com/sailpoint-oss/navigator"
 	tree_sitter "github.com/tree-sitter/go-tree-sitter"
 )
 

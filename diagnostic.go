@@ -5,7 +5,7 @@
 package barrelman
 
 import (
-	navigator "github.com/LukasParke/navigator"
+	navigator "github.com/sailpoint-oss/navigator"
 )
 
 // Severity indicates the severity level of a diagnostic.

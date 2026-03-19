@@ -1,7 +1,7 @@
 package markdown
 
 import (
-	navigator "github.com/LukasParke/navigator"
+	navigator "github.com/sailpoint-oss/navigator"
 )
 
 // TranslatePosition converts a goldmark 1-based line number into an absolute

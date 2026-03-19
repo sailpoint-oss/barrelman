@@ -1,7 +1,7 @@
 package analyzers
 
 import (
-	navigator "github.com/LukasParke/navigator"
+	navigator "github.com/sailpoint-oss/navigator"
 	"github.com/sailpoint-oss/barrelman"
 )
 

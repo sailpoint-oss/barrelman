@@ -1,7 +1,7 @@
 package barrelman
 
 import (
-	navigator "github.com/LukasParke/navigator"
+	navigator "github.com/sailpoint-oss/navigator"
 )
 
 // RuleBuilder provides a fluent API for defining OpenAPI diagnostic rules.

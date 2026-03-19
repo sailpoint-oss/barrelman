@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	navigator "github.com/LukasParke/navigator"
+	navigator "github.com/sailpoint-oss/navigator"
 	"github.com/sailpoint-oss/barrelman"
 )
 

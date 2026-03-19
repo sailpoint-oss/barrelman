@@ -3,7 +3,7 @@ package barrelman
 import (
 	"fmt"
 
-	navigator "github.com/LukasParke/navigator"
+	navigator "github.com/sailpoint-oss/navigator"
 )
 
 // Reporter collects diagnostics during rule evaluation. Visitor callbacks

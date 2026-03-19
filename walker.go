@@ -3,7 +3,7 @@ package barrelman
 import (
 	"fmt"
 
-	navigator "github.com/LukasParke/navigator"
+	navigator "github.com/sailpoint-oss/navigator"
 )
 
 // Visitors holds optional callback functions for each OpenAPI model element.

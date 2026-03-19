@@ -25,11 +25,10 @@ var spectralToTelescope = map[string]string{
 	"tag-description":              "tag-description",
 	"parameter-description":        "parameter-description",
 	"oas3-unused-component":        "unused-component",
-	// TODO: native implementations needed
-	// "contact-properties":           "contact-properties",
-	// "license-url":                  "license-url",
-	// "oas3-valid-media-example":     "oas3-valid-media-example",
-	// "oas3-valid-schema-example":    "oas3-valid-schema-example",
+	"contact-properties":           "contact-properties",
+	"license-url":                  "license-url",
+	"oas3-valid-media-example":     "oas3-valid-media-example",
+	"oas3-valid-schema-example":    "oas3-valid-schema-example",
 }
 
 // telescopeToSpectral is the reverse mapping.

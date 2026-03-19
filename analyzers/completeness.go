@@ -4,11 +4,31 @@ import (
 	"fmt"
 	"strings"
 
-	navigator "github.com/LukasParke/navigator"
+	navigator "github.com/sailpoint-oss/navigator"
 	"github.com/sailpoint-oss/barrelman"
 )
 
 var (
+	contactPropertiesMeta = barrelman.RuleMeta{
+		ID:          "contact-properties",
+		Description: "Contact object should have name, url, and email.",
+		Severity:    barrelman.SeverityWarning,
+		Category:    barrelman.CategoryDocumentation,
+		Recommended: false,
+		HowToFix:    "Add name, url, and email properties to the info.contact object.",
+		DocURL:      barrelman.DocBaseURL + "contact-properties",
+	}
+
+	licenseURLMeta = barrelman.RuleMeta{
+		ID:          "license-url",
+		Description: "License object should include a url.",
+		Severity:    barrelman.SeverityWarning,
+		Category:    barrelman.CategoryDocumentation,
+		Recommended: false,
+		HowToFix:    "Add a 'url' property to the info.license object.",
+		DocURL:      barrelman.DocBaseURL + "license-url",
+	}
+
 	missingErrorResponsesMeta = barrelman.RuleMeta{
 		ID:          "missing-error-responses",
 		Description: "Operations should define at least one error response (4xx or 5xx).",
@@ -140,6 +160,35 @@ func registerCompletenessAnalyzers(reg *barrelman.Registry) {
 			r.At(navigator.LocOrFallback(op.ParametersLoc, op.Loc), "GET %s returns an array but has no pagination parameters", path)
 		}).
 		Register(reg)
+
+	barrelman.Define("contact-properties", contactPropertiesMeta).Info(
+		func(info *navigator.Info, r *barrelman.Reporter) {
+			if info.Contact == nil {
+				return
+			}
+			c := info.Contact
+			if c.Name == "" {
+				r.At(c.Loc, "Contact object should have a 'name' property")
+			}
+			if c.URL == "" {
+				r.At(c.Loc, "Contact object should have a 'url' property")
+			}
+			if c.Email == "" {
+				r.At(c.Loc, "Contact object should have an 'email' property")
+			}
+		},
+	).Register(reg)
+
+	barrelman.Define("license-url", licenseURLMeta).Info(
+		func(info *navigator.Info, r *barrelman.Reporter) {
+			if info.License == nil {
+				return
+			}
+			if info.License.URL == "" {
+				r.At(info.License.Loc, "License object should have a 'url' property")
+			}
+		},
+	).Register(reg)
 
 	barrelman.Define("inconsistent-error-shape", inconsistentErrorShapeMeta).
 		Custom(func(idx *navigator.Index, r *barrelman.Reporter) {

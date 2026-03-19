@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	navigator "github.com/LukasParke/navigator"
+	navigator "github.com/sailpoint-oss/navigator"
 	"github.com/dlclark/regexp2"
 	"github.com/sailpoint-oss/barrelman"
 	"github.com/sailpoint-oss/barrelman/schemas"
