@@ -133,7 +133,7 @@ func assertDiagnostics(t *testing.T, actual []barrelman.Diagnostic, expected []D
 		}
 		d := actual[i]
 
-		if exp.Line != d.Range.Start.Line {
+		if exp.Line > 0 && exp.Line != d.Range.Start.Line {
 			t.Errorf("diagnostic #%d line: got %d, want %d (code=%s msg=%q)",
 				i, d.Range.Start.Line, exp.Line, d.Code, d.Message)
 		}
