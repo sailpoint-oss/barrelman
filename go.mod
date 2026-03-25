@@ -20,6 +20,3 @@ require (
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 )
-
-// Remove this replace after github.com/sailpoint-oss/navigator v0.2.0 is published, then run go mod tidy.
-replace github.com/sailpoint-oss/navigator => ../navigator
