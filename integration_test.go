@@ -76,8 +76,8 @@ func isZeroRange(r barrelman.Range) bool {
 
 // TestIntegration_LintContent_ValidSpec verifies the full pipeline runs on a
 // well-formed OpenAPI 3.0 spec. Structural validation (oas3-schema) is excluded
-// from the error check because the embedded JSON Schema has known false
-// positives around license/contact property validation.
+// from the error check because navigator may still emit document-level
+// structural/meta issues for otherwise acceptable specs until parity tuning.
 func TestIntegration_LintContent_ValidSpec(t *testing.T) {
 	spec := `openapi: "3.0.3"
 info:
