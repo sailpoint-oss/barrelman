@@ -1,10 +1,11 @@
 package analyzers
 
 import (
+	"sort"
 	"strings"
 
-	navigator "github.com/sailpoint-oss/navigator"
 	"github.com/sailpoint-oss/barrelman"
+	navigator "github.com/sailpoint-oss/navigator"
 )
 
 var (
@@ -73,7 +74,8 @@ func registerNamingAnalyzers(reg *barrelman.Registry) {
 				desc string
 			}
 			seen := make(map[string]opInfo)
-			for path, item := range idx.Document.Paths {
+			for _, path := range sortedPathKeys(idx.Document.Paths) {
+				item := idx.Document.Paths[path]
 				for _, mo := range item.Operations() {
 					opID := mo.Operation.OperationID
 					if opID == "" {
@@ -98,4 +100,13 @@ func registerNamingAnalyzers(reg *barrelman.Registry) {
 			}
 		},
 	).Register(reg)
+}
+
+func sortedPathKeys(paths map[string]*navigator.PathItem) []string {
+	keys := make([]string, 0, len(paths))
+	for path := range paths {
+		keys = append(keys, path)
+	}
+	sort.Strings(keys)
+	return keys
 }

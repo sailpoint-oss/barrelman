@@ -99,7 +99,11 @@ paths:
         "200":
           description: ok`,
 			Expect: []btesting.Diag{
-				{Code: "operation-operationId-unique", Severity: btesting.Error},
+				{
+					Code:     "operation-operationId-unique",
+					Severity: btesting.Error,
+					Message:  "GET /pets",
+				},
 			},
 		},
 	)
