@@ -45,7 +45,8 @@ type ExtensionsConfig struct {
 	Required []string `yaml:"required,omitempty"` // extension names that must be present
 }
 
-// ValidationGroup defines file patterns, schemas, and rules for additional validation.
+// ValidationGroup defines file patterns, schemas, and rules for additional
+// non-OpenAPI validation.
 type ValidationGroup struct {
 	Patterns []string               `yaml:"patterns" json:"patterns"`
 	Schemas  []SchemaPatternMapping `yaml:"schemas,omitempty" json:"schemas,omitempty"`

@@ -89,6 +89,29 @@ paths:
 	)
 }
 
+// TestOAuthFlowURLs is limited because navigator v0.2.0 may not fully parse
+// OAuth flows. When navigator adds full flow parsing, extend with a failing case.
+func TestOAuthFlowURLs(t *testing.T) {
+	rule := registeredRule("oauth-flow-urls")
+
+	btesting.Run(t, rule,
+		btesting.Case{
+			Name: "non-oauth security scheme passes",
+			Spec: `openapi: "3.0.3"
+info:
+  title: Test
+  version: "1.0"
+paths: {}
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer`,
+			Expect: nil,
+		},
+	)
+}
+
 func TestSecuritySchemesDefined(t *testing.T) {
 	rule := registeredRule("security-schemes-defined")
 

@@ -27,7 +27,13 @@ func registerStructuralValidation(reg *barrelman.Registry) {
 			if ctx == nil || ctx.Index == nil {
 				return nil
 			}
-			return issuesToOAS3Diagnostics(ctx, ctx.Index.Issues)
+			issues := ctx.Index.Issues
+			if ctx.TargetVersion != navigator.VersionUnknown {
+				issues = ctx.Index.Revalidate(navigator.ValidationOptions{
+					TargetVersion: ctx.TargetVersion,
+				})
+			}
+			return issuesToOAS3Diagnostics(ctx, issues)
 		},
 	})
 }

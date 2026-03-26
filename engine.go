@@ -37,6 +37,9 @@ func LintFiles(files []string, opts LintOptions) ([]LintResult, error) {
 		allRules = DefaultRegistry.AllRules()
 	}
 
+	workspaceRoot := resolveLintWorkspaceRoot(files, opts.WorkspaceRoot)
+	projects := prepareLintProjects(files)
+
 	var results []LintResult
 	for _, file := range files {
 		content, err := os.ReadFile(file)
@@ -57,6 +60,10 @@ func LintFiles(files []string, opts LintOptions) ([]LintResult, error) {
 
 		uri := fileToURI(file)
 		idx := navigator.ParseContent(content, uri)
+		var resolver CrossRefResolver
+		if project := projects[uri]; project != nil {
+			resolver = project.Resolver()
+		}
 
 		var tree *tree_sitter.Tree
 		var lang *tree_sitter.Language
@@ -97,6 +104,8 @@ func LintFiles(files []string, opts LintOptions) ([]LintResult, error) {
 			Language:      lang,
 			Content:       content,
 			URI:           uri,
+			WorkspaceRoot: workspaceRoot,
+			Resolver:      resolver,
 			TargetVersion: targetVersion,
 		}
 
@@ -166,6 +175,7 @@ func LintContent(uri string, content []byte, opts LintOptions) ([]Diagnostic, er
 		Language:      lang,
 		Content:       content,
 		URI:           uri,
+		WorkspaceRoot: resolveLintWorkspaceRoot(nil, opts.WorkspaceRoot),
 		TargetVersion: targetVersion,
 	}
 

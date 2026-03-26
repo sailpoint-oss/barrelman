@@ -1,7 +1,8 @@
-// Package validation provides additional file validation capabilities beyond
-// the built-in OpenAPI structural validation. It allows applying JSON Schema
-// validation to arbitrary YAML/JSON files via pattern-based matching, and
-// provides schema validation with error enrichment for OpenAPI documents.
+// Package validation provides additional non-OpenAPI file validation
+// capabilities beyond Barrelman's built-in OpenAPI structural validation.
+// OpenAPI parse-time structural/schema ownership lives in navigator and is
+// surfaced through Barrelman's `oas3-schema` rule; this package remains for
+// pattern-based validation of other YAML/JSON files.
 package validation
 
 import (

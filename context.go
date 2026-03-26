@@ -18,6 +18,7 @@ type AnalysisContext struct {
 	Language      *tree_sitter.Language // paired with Tree (YAML or JSON)
 	Content       []byte                // raw source bytes
 	URI           string                // file URI
+	WorkspaceRoot string                // absolute workspace root, if known
 	Resolver      CrossRefResolver      // cross-file $ref resolution (nil for single-file)
 	TargetVersion navigator.Version     // from config; empty = auto-detect
 }
