@@ -3,29 +3,28 @@ package rulesets
 import (
 	"testing"
 
-	"github.com/sailpoint-oss/barrelman"
 	"gopkg.in/yaml.v3"
 )
 
 func TestParseSeverity(t *testing.T) {
 	tests := []struct {
-		input    string
-		wantSev  barrelman.Severity
-		wantOK   bool
+		input   string
+		wantSev Severity
+		wantOK  bool
 	}{
-		{"error", barrelman.SeverityError, true},
-		{"warn", barrelman.SeverityWarning, true},
-		{"warning", barrelman.SeverityWarning, true},
-		{"info", barrelman.SeverityInfo, true},
-		{"information", barrelman.SeverityInfo, true},
-		{"hint", barrelman.SeverityHint, true},
-		{"off", 0, true},
-		{"false", 0, true},
-		{"", 0, false},
-		{"invalid", 0, false},
-		{"ERROR", 0, false},    // case-sensitive
-		{"Warning", 0, false},  // case-sensitive
-		{"unknown", 0, false},
+		{"error", SeverityError, true},
+		{"warn", SeverityWarning, true},
+		{"warning", SeverityWarning, true},
+		{"info", SeverityInfo, true},
+		{"information", SeverityInfo, true},
+		{"hint", SeverityHint, true},
+		{"off", SeverityOff, true},
+		{"false", SeverityOff, true},
+		{"", SeverityOff, false},
+		{"invalid", SeverityOff, false},
+		{"ERROR", SeverityOff, false},   // case-sensitive
+		{"Warning", SeverityOff, false}, // case-sensitive
+		{"unknown", SeverityOff, false},
 	}
 
 	for _, tt := range tests {
@@ -43,9 +42,9 @@ func TestParseSeverity(t *testing.T) {
 
 func TestRuleDefinition_UnmarshalYAML_StringSeverity(t *testing.T) {
 	tests := []struct {
-		name     string
-		yaml     string
-		wantSev  string
+		name    string
+		yaml    string
+		wantSev string
 	}{
 		{"error", `"error"`, "error"},
 		{"warn", `"warn"`, "warn"},
@@ -264,7 +263,7 @@ func TestIntToSeverity(t *testing.T) {
 		{"2", "warn"},
 		{"3", "info"},
 		{"4", "hint"},
-		{"5", "5"},       // unknown int passes through
+		{"5", "5"}, // unknown int passes through
 		{"99", "99"},
 	}
 
@@ -281,14 +280,14 @@ func TestIntToSeverity(t *testing.T) {
 func TestSeverityOverrideStruct(t *testing.T) {
 	so := SeverityOverride{
 		RuleID:   "test-rule",
-		Severity: barrelman.SeverityError,
+		Severity: SeverityError,
 		Disabled: false,
 	}
 	if so.RuleID != "test-rule" {
 		t.Errorf("RuleID = %q, want %q", so.RuleID, "test-rule")
 	}
-	if so.Severity != barrelman.SeverityError {
-		t.Errorf("Severity = %v, want %v", so.Severity, barrelman.SeverityError)
+	if so.Severity != SeverityError {
+		t.Errorf("Severity = %v, want %v", so.Severity, SeverityError)
 	}
 	if so.Disabled {
 		t.Error("Disabled = true, want false")

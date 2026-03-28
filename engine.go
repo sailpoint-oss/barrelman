@@ -20,24 +20,23 @@ type LintResult struct {
 // LintOptions configures a lint run.
 type LintOptions struct {
 	MinSeverity   Severity
-	ConfigPath    string
-	RulesetPath   string
+	ConfigPath    string // optional Barrelman config file; legacy .telescope.* configs also parse
+	RulesetPath   string // optional Barrelman ruleset file merged on top of config/built-ins
 	WorkspaceRoot string
 	Include       []string
 	Exclude       []string
 	TargetVersion string
-	Rules         []Rule // if non-nil, overrides DefaultRegistry
+	Rules         []Rule // if non-nil, supplies the executable rule set before config/ruleset overrides apply
 }
 
 // LintFiles runs the full barrelman rule suite against the given files.
 // Pure Go, no gossip, no plugins, no external LSPs.
 func LintFiles(files []string, opts LintOptions) ([]LintResult, error) {
-	allRules := opts.Rules
-	if allRules == nil {
-		allRules = DefaultRegistry.AllRules()
-	}
-
 	workspaceRoot := resolveLintWorkspaceRoot(files, opts.WorkspaceRoot)
+	allRules, severityOverrides, err := resolveLintRules(opts, workspaceRoot)
+	if err != nil {
+		return nil, err
+	}
 	projects := prepareLintProjects(files)
 
 	var results []LintResult
@@ -111,7 +110,7 @@ func LintFiles(files []string, opts LintOptions) ([]LintResult, error) {
 
 		var diags []Diagnostic
 		for _, rule := range allRules {
-			diags = append(diags, rule.Run(ctx)...)
+			diags = append(diags, applyRuleSeverityOverride(rule.Run(ctx), rule.ID, severityOverrides)...)
 		}
 
 		if opts.MinSeverity > 0 {
@@ -129,9 +128,10 @@ func LintFiles(files []string, opts LintOptions) ([]LintResult, error) {
 
 // LintContent runs all rules against in-memory content.
 func LintContent(uri string, content []byte, opts LintOptions) ([]Diagnostic, error) {
-	allRules := opts.Rules
-	if allRules == nil {
-		allRules = DefaultRegistry.AllRules()
+	workspaceRoot := resolveLintWorkspaceRoot(nil, opts.WorkspaceRoot)
+	allRules, severityOverrides, err := resolveLintRules(opts, workspaceRoot)
+	if err != nil {
+		return nil, err
 	}
 
 	idx := navigator.ParseContent(content, uri)
@@ -175,13 +175,13 @@ func LintContent(uri string, content []byte, opts LintOptions) ([]Diagnostic, er
 		Language:      lang,
 		Content:       content,
 		URI:           uri,
-		WorkspaceRoot: resolveLintWorkspaceRoot(nil, opts.WorkspaceRoot),
+		WorkspaceRoot: workspaceRoot,
 		TargetVersion: targetVersion,
 	}
 
 	var diags []Diagnostic
 	for _, rule := range allRules {
-		diags = append(diags, rule.Run(ctx)...)
+		diags = append(diags, applyRuleSeverityOverride(rule.Run(ctx), rule.ID, severityOverrides)...)
 	}
 
 	if opts.MinSeverity > 0 {

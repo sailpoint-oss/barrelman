@@ -13,7 +13,7 @@ type CrossRefResolver interface {
 // AnalysisContext is the gossip-free execution environment for every rule.
 // It replaces treesitter.AnalysisContext as the universal context type.
 type AnalysisContext struct {
-	Index         *navigator.Index      // parsed OpenAPI document (nil for non-OpenAPI files)
+	Index         *navigator.Index      // parsed API-description index (OpenAPI or Arazzo when available)
 	Tree          *tree_sitter.Tree     // tree-sitter CST (nil for content-only analysis)
 	Language      *tree_sitter.Language // paired with Tree (YAML or JSON)
 	Content       []byte                // raw source bytes

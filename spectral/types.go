@@ -72,7 +72,7 @@ func parseRule(id string, def rulesets.RuleDefinition) (Rule, bool) {
 
 	sev := barrelman.SeverityWarning
 	if s, ok := rulesets.ParseSeverity(def.Severity); ok && s > 0 {
-		sev = s
+		sev = barrelman.Severity(s)
 	}
 
 	recommended := true

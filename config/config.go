@@ -8,7 +8,8 @@ import (
 	"github.com/sailpoint-oss/barrelman/rulesets"
 )
 
-// Config represents the Telescope configuration.
+// Config represents the Barrelman static-analysis configuration. Legacy
+// `.telescope.*` file locations remain supported for compatibility.
 type Config struct {
 	Extends              string                     `yaml:"extends,omitempty"`
 	Roots                []string                   `yaml:"roots,omitempty"`
@@ -23,7 +24,8 @@ type Config struct {
 	LSP                  LSPConfig                  `yaml:"lsp,omitempty"`
 }
 
-// RuleRef references a custom rule or schema file in .telescope/.
+// RuleRef references a custom rule or schema file in the workspace config
+// directory (`.barrelman/` canonically, `.telescope/` for legacy setups).
 type RuleRef struct {
 	Rule     string         `yaml:"rule,omitempty" json:"rule,omitempty"`
 	Severity string         `yaml:"severity,omitempty" json:"severity,omitempty"`
@@ -41,7 +43,7 @@ type OpenAPIConfig struct {
 
 // ExtensionsConfig configures x-* extension validation.
 type ExtensionsConfig struct {
-	Schemas  []string `yaml:"schemas,omitempty"`  // .telescope/extensions/*.json filenames
+	Schemas  []string `yaml:"schemas,omitempty"`  // .barrelman/extensions/*.json filenames
 	Required []string `yaml:"required,omitempty"` // extension names that must be present
 }
 

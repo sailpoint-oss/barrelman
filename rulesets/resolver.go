@@ -63,7 +63,7 @@ func resolveExtends(extends interface{}, basePath string, visited map[string]boo
 	for _, name := range names {
 		// Compute canonical key for cycle detection
 		key := name
-		if !strings.HasPrefix(name, "telescope:") && !strings.HasPrefix(name, "spectral:") {
+		if !isBuiltinRulesetName(name) && !strings.HasPrefix(name, "spectral:") {
 			absPath := name
 			if !filepath.IsAbs(absPath) {
 				absPath = filepath.Join(basePath, absPath)
@@ -90,7 +90,7 @@ func resolveExtends(extends interface{}, basePath string, visited map[string]boo
 }
 
 func loadExtend(name, basePath string) (*RuleSet, error) {
-	if strings.HasPrefix(name, "telescope:") {
+	if isBuiltinRulesetName(name) {
 		rs := GetBuiltin(name)
 		if rs == nil {
 			return nil, fmt.Errorf("unknown built-in ruleset: %s", name)
@@ -112,4 +112,8 @@ func loadExtend(name, basePath string) (*RuleSet, error) {
 		path = filepath.Join(basePath, path)
 	}
 	return LoadFile(path)
+}
+
+func isBuiltinRulesetName(name string) bool {
+	return strings.HasPrefix(name, "barrelman:") || strings.HasPrefix(name, "telescope:")
 }

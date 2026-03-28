@@ -1,10 +1,6 @@
 package rulesets
 
-import (
-	"testing"
-
-	"github.com/sailpoint-oss/barrelman"
-)
+import "testing"
 
 func TestMerge_Empty(t *testing.T) {
 	result := Merge()
@@ -55,8 +51,8 @@ func TestMerge_LaterTakesPriority(t *testing.T) {
 	}
 	rs2 := &RuleSet{
 		Rules: map[string]RuleDefinition{
-			"rule-a": {Severity: "info"},   // override
-			"rule-c": {Severity: "hint"},   // new
+			"rule-a": {Severity: "info"}, // override
+			"rule-c": {Severity: "hint"}, // new
 		},
 	}
 	result := Merge(rs1, rs2)
@@ -136,12 +132,12 @@ func TestBuildEnabledMap_Nil(t *testing.T) {
 func TestBuildEnabledMap_WithRules(t *testing.T) {
 	rs := &RuleSet{
 		Rules: map[string]RuleDefinition{
-			"rule-enabled":     {Severity: "error"},
-			"rule-warn":        {Severity: "warn"},
-			"rule-info":        {Severity: "info"},
-			"rule-hint":        {Severity: "hint"},
-			"rule-off":         {Severity: "off"},
-			"rule-false":       {Severity: "false"},
+			"rule-enabled": {Severity: "error"},
+			"rule-warn":    {Severity: "warn"},
+			"rule-info":    {Severity: "info"},
+			"rule-hint":    {Severity: "hint"},
+			"rule-off":     {Severity: "off"},
+			"rule-false":   {Severity: "false"},
 		},
 	}
 
@@ -213,14 +209,14 @@ func TestBuildSeverityOverrides_WithRules(t *testing.T) {
 
 	tests := []struct {
 		ruleID   string
-		severity barrelman.Severity
+		severity Severity
 		disabled bool
 	}{
-		{"rule-error", barrelman.SeverityError, false},
-		{"rule-warn", barrelman.SeverityWarning, false},
-		{"rule-info", barrelman.SeverityInfo, false},
-		{"rule-hint", barrelman.SeverityHint, false},
-		{"rule-off", 0, true},
+		{"rule-error", SeverityError, false},
+		{"rule-warn", SeverityWarning, false},
+		{"rule-info", SeverityInfo, false},
+		{"rule-hint", SeverityHint, false},
+		{"rule-off", SeverityOff, true},
 	}
 
 	for _, tt := range tests {

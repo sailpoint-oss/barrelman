@@ -9,10 +9,12 @@ import (
 )
 
 // SpectralFiles lists the config filenames searched for Spectral rulesets, in
-// priority order. The .telescope/ directory is searched first so that
-// Telescope-specific configuration takes precedence over workspace-root
-// Spectral configs.
+// priority order. Barrelman-owned locations come first; legacy Telescope
+// locations remain supported after that.
 var SpectralFiles = []string{
+	".barrelman/spectral.yaml",
+	".barrelman/spectral.yml",
+	".barrelman/spectral.json",
 	".telescope/spectral.yaml",
 	".telescope/spectral.yml",
 	".telescope/spectral.json",

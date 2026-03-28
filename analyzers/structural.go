@@ -9,11 +9,11 @@ import (
 
 var structuralMeta = barrelman.RuleMeta{
 	ID:          "oas3-schema",
-	Description: "Validates the document using navigator parse-time structural and schema checks.",
+	Description: "Surfaces Navigator structural and meta-schema issues for the current API-description document.",
 	Severity:    barrelman.SeverityError,
 	Category:    barrelman.CategoryStructure,
 	Recommended: true,
-	HowToFix:    "Fix the issues reported for the OpenAPI document.",
+	HowToFix:    "Fix the issues reported for the current OpenAPI or Arazzo document.",
 	DocURL:      barrelman.DocBaseURL + "oas3-schema",
 }
 
@@ -54,6 +54,7 @@ func issuesToOAS3Diagnostics(ctx *barrelman.AnalysisContext, issues []navigator.
 			data["pointer"] = iss.Pointer
 		}
 		data["category"] = issueCategoryString(iss.Category)
+		data["documentKind"] = iss.DocumentKind.String()
 
 		out = append(out, barrelman.Diagnostic{
 			URI:             ctx.URI,

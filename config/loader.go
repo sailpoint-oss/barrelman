@@ -9,14 +9,21 @@ import (
 )
 
 // ConfigFiles are the files searched for configuration, in priority order.
+// Barrelman-owned names come first; legacy Telescope names remain supported
+// for compatibility with existing workspaces.
 var ConfigFiles = []string{
+	".barrelman.yaml",
+	".barrelman.yml",
+	".barrelman/config.yaml",
+	".barrelman/config.yml",
 	".telescope.yaml",
 	".telescope.yml",
 	".telescope/config.yaml",
 	".telescope/config.yml",
 }
 
-// Load finds and loads the telescope config from the given workspace root.
+// Load finds and loads the Barrelman static-analysis config from the given
+// workspace root.
 // Returns the default config if no config file is found.
 func Load(workspaceRoot string) (*Config, error) {
 	for _, name := range ConfigFiles {

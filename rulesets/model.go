@@ -3,7 +3,6 @@ package rulesets
 import (
 	"fmt"
 
-	"github.com/sailpoint-oss/barrelman"
 	"gopkg.in/yaml.v3"
 )
 
@@ -102,27 +101,38 @@ func intToSeverity(s string) string {
 	}
 }
 
+// Severity is the ruleset-level severity enum used for overrides.
+type Severity int
+
+const (
+	SeverityOff Severity = iota
+	SeverityError
+	SeverityWarning
+	SeverityInfo
+	SeverityHint
+)
+
 // SeverityOverride maps rule IDs to their overridden severity.
 type SeverityOverride struct {
 	RuleID   string
-	Severity barrelman.Severity
+	Severity Severity
 	Disabled bool
 }
 
 // ParseSeverity converts a severity string to a core Severity.
-func ParseSeverity(s string) (barrelman.Severity, bool) {
+func ParseSeverity(s string) (Severity, bool) {
 	switch s {
 	case "error":
-		return barrelman.SeverityError, true
+		return SeverityError, true
 	case "warn", "warning":
-		return barrelman.SeverityWarning, true
+		return SeverityWarning, true
 	case "info", "information":
-		return barrelman.SeverityInfo, true
+		return SeverityInfo, true
 	case "hint":
-		return barrelman.SeverityHint, true
+		return SeverityHint, true
 	case "off", "false":
-		return 0, true
+		return SeverityOff, true
 	default:
-		return 0, false
+		return SeverityOff, false
 	}
 }

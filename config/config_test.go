@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -100,5 +102,76 @@ func TestResolveRunner(t *testing.T) {
 		if got != tc.want {
 			t.Errorf("ResolveRunner(%+v) = %q, want %q", tc.ref, got, tc.want)
 		}
+	}
+}
+
+func TestLoad_ReturnsDefaultConfigWhenMissing(t *testing.T) {
+	dir := t.TempDir()
+	cfg, err := Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg == nil {
+		t.Fatal("expected config")
+	}
+	if cfg.Extends != rulesets.Recommended {
+		t.Fatalf("Extends = %q, want %q", cfg.Extends, rulesets.Recommended)
+	}
+}
+
+func TestLoad_FindsWorkspaceConfig(t *testing.T) {
+	dir := t.TempDir()
+	configPath := filepath.Join(dir, ".barrelman.yaml")
+	data := []byte("extends: barrelman:strict\nrules:\n  operation-tags: error\n")
+	if err := os.WriteFile(configPath, data, 0o644); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	cfg, err := Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.Extends != "barrelman:strict" {
+		t.Fatalf("Extends = %q, want barrelman:strict", cfg.Extends)
+	}
+	if cfg.Rules["operation-tags"] != "error" {
+		t.Fatalf("expected rules override, got %+v", cfg.Rules)
+	}
+}
+
+func TestLoad_PrefersBarrelmanConfigOverLegacyTelescopeConfig(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, ".telescope.yaml"), []byte("extends: telescope:all\n"), 0o644); err != nil {
+		t.Fatalf("write legacy config: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, ".barrelman.yaml"), []byte("extends: barrelman:strict\n"), 0o644); err != nil {
+		t.Fatalf("write barrelman config: %v", err)
+	}
+
+	cfg, err := Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.Extends != "barrelman:strict" {
+		t.Fatalf("Extends = %q, want barrelman:strict", cfg.Extends)
+	}
+}
+
+func TestLoadFile_ParsesConfig(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	data := []byte("output:\n  format: json\nlsp:\n  debounce: 150ms\n")
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	cfg, err := LoadFile(path)
+	if err != nil {
+		t.Fatalf("LoadFile: %v", err)
+	}
+	if cfg.Output.Format != "json" {
+		t.Fatalf("Output.Format = %q, want json", cfg.Output.Format)
+	}
+	if cfg.LSP.Debounce != 150*time.Millisecond {
+		t.Fatalf("LSP.Debounce = %v, want 150ms", cfg.LSP.Debounce)
 	}
 }

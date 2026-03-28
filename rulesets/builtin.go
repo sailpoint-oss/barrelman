@@ -1,27 +1,44 @@
 package rulesets
 
-import (
-	"github.com/sailpoint-oss/barrelman"
-)
+type CatalogRule struct {
+	ID          string
+	Severity    Severity
+	Category    string
+	Recommended bool
+}
+
+var builtinCatalogProvider func() []CatalogRule
+
+// SetBuiltinCatalogProvider installs the rule catalog used to materialize
+// built-in rulesets. Barrelman wires this to its live registry; other callers
+// may provide their own catalogs in tests or alternate integrations.
+func SetBuiltinCatalogProvider(provider func() []CatalogRule) {
+	builtinCatalogProvider = provider
+}
 
 // Built-in ruleset names.
 const (
-	Recommended = "telescope:recommended"
-	All         = "telescope:all"
-	OWASP       = "telescope:owasp"
-	Strict      = "telescope:strict"
+	Recommended = "barrelman:recommended"
+	All         = "barrelman:all"
+	OWASP       = "barrelman:owasp"
+	Strict      = "barrelman:strict"
+
+	LegacyRecommended = "telescope:recommended"
+	LegacyAll         = "telescope:all"
+	LegacyOWASP       = "telescope:owasp"
+	LegacyStrict      = "telescope:strict"
 )
 
 // GetBuiltin returns a resolved ruleset by its built-in name.
 func GetBuiltin(name string) *RuleSet {
 	switch name {
-	case Recommended:
+	case Recommended, LegacyRecommended:
 		return recommendedRuleSet()
-	case All:
+	case All, LegacyAll:
 		return allRuleSet()
-	case OWASP:
+	case OWASP, LegacyOWASP:
 		return owaspRuleSet()
-	case Strict:
+	case Strict, LegacyStrict:
 		return strictRuleSet()
 	default:
 		return nil
@@ -30,11 +47,11 @@ func GetBuiltin(name string) *RuleSet {
 
 func recommendedRuleSet() *RuleSet {
 	rs := &RuleSet{
-		Name:        "Telescope Recommended",
-		Description: "Curated set of the most important OpenAPI rules.",
+		Name:        "Barrelman Recommended",
+		Description: "Curated set of the most important API-description rules.",
 		Rules:       make(map[string]RuleDefinition),
 	}
-	for _, meta := range barrelman.DefaultRegistry.All() {
+	for _, meta := range builtinCatalog() {
 		if meta.Recommended {
 			rs.Rules[meta.ID] = RuleDefinition{Severity: severityString(meta.Severity)}
 		}
@@ -44,12 +61,12 @@ func recommendedRuleSet() *RuleSet {
 
 func allRuleSet() *RuleSet {
 	rs := &RuleSet{
-		Name:        "Telescope All",
-		Description: "All available OpenAPI rules.",
+		Name:        "Barrelman All",
+		Description: "All available non-OWASP API-description rules.",
 		Rules:       make(map[string]RuleDefinition),
 	}
-	for _, meta := range barrelman.DefaultRegistry.All() {
-		if meta.Category != barrelman.CategoryOWASP {
+	for _, meta := range builtinCatalog() {
+		if meta.Category != "owasp" {
 			rs.Rules[meta.ID] = RuleDefinition{Severity: severityString(meta.Severity)}
 		}
 	}
@@ -58,11 +75,14 @@ func allRuleSet() *RuleSet {
 
 func owaspRuleSet() *RuleSet {
 	rs := &RuleSet{
-		Name:        "Telescope OWASP",
+		Name:        "Barrelman OWASP",
 		Description: "OWASP API security rules.",
 		Rules:       make(map[string]RuleDefinition),
 	}
-	for _, meta := range barrelman.DefaultRegistry.ByCategory(barrelman.CategoryOWASP) {
+	for _, meta := range builtinCatalog() {
+		if meta.Category != "owasp" {
+			continue
+		}
 		rs.Rules[meta.ID] = RuleDefinition{Severity: severityString(meta.Severity)}
 	}
 	return rs
@@ -72,7 +92,7 @@ func strictRuleSet() *RuleSet {
 	recommended := recommendedRuleSet()
 	owasp := owaspRuleSet()
 	rs := &RuleSet{
-		Name:        "Telescope Strict",
+		Name:        "Barrelman Strict",
 		Description: "Recommended rules plus OWASP with stricter severities.",
 		Rules:       make(map[string]RuleDefinition, len(recommended.Rules)+len(owasp.Rules)),
 	}
@@ -85,15 +105,22 @@ func strictRuleSet() *RuleSet {
 	return rs
 }
 
-func severityString(s barrelman.Severity) string {
+func builtinCatalog() []CatalogRule {
+	if builtinCatalogProvider == nil {
+		return nil
+	}
+	return builtinCatalogProvider()
+}
+
+func severityString(s Severity) string {
 	switch s {
-	case barrelman.SeverityError:
+	case SeverityError:
 		return "error"
-	case barrelman.SeverityWarning:
+	case SeverityWarning:
 		return "warn"
-	case barrelman.SeverityInfo:
+	case SeverityInfo:
 		return "info"
-	case barrelman.SeverityHint:
+	case SeverityHint:
 		return "hint"
 	default:
 		return "warn"

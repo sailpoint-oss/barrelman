@@ -1,5 +1,5 @@
-// Package config handles loading and parsing of Telescope's
-// .telescope.yaml configuration files.
+// Package config handles loading and parsing of Barrelman's static-analysis
+// configuration files.
 //
 // # Loading Configuration
 //
@@ -9,18 +9,18 @@
 //	cfg, err := config.Load("/path/to/project")
 //
 // If no configuration file is found, [DefaultConfig] is returned with
-// sensible defaults (extends telescope:recommended, standard include
+// sensible defaults (extends barrelman:recommended, standard include
 // patterns for YAML/JSON files).
 //
 // [LoadFile] loads from a specific path:
 //
-//	cfg, err := config.LoadFile(".telescope.yaml")
+//	cfg, err := config.LoadFile(".barrelman.yaml")
 //
 // # Configuration Fields
 //
 // The [Config] struct supports:
 //
-//   - Extends: base ruleset name (e.g., "telescope:recommended")
+//   - Extends: base ruleset name (e.g., "barrelman:recommended")
 //   - Rules: per-rule severity overrides
 //   - Plugins: paths to Spectral YAML rulesets or Go plugin binaries
 //   - Include/Exclude: glob patterns for file discovery
