@@ -201,7 +201,7 @@ components:
 			Expect: nil,
 		},
 		btesting.Case{
-			Name: "oauth2 without flows field passes with tree-sitter",
+			Name: "oauth2 implicit flow without refreshUrl warns",
 			Spec: `openapi: "3.0.3"
 info:
   title: Test
@@ -216,7 +216,9 @@ components:
           authorizationUrl: https://example.com/auth
           scopes:
             read: read`,
-			Expect: nil,
+			Expect: []btesting.Diag{
+				{Code: "owasp-short-lived-access-tokens", Severity: btesting.Warn},
+			},
 		},
 	)
 }

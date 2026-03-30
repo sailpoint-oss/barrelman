@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/sailpoint-oss/barrelman/rulesets"
 	"gopkg.in/yaml.v3"
 )
 
@@ -46,6 +47,31 @@ func LoadFile(path string) (*Config, error) {
 	if err := yaml.Unmarshal(data, cfg); err != nil {
 		return nil, fmt.Errorf("parse config %s: %w", path, err)
 	}
+	cfg.Rules = normalizeRuleOverrides(cfg.Rules)
 
 	return cfg, nil
+}
+
+func normalizeRuleOverrides(rules map[string]string) map[string]string {
+	if len(rules) == 0 {
+		return rules
+	}
+
+	normalized := make(map[string]string, len(rules))
+	for id, severity := range rules {
+		canonical := rulesets.NormalizeRuleID(id)
+		if canonical == id {
+			normalized[id] = severity
+		}
+	}
+	for id, severity := range rules {
+		canonical := rulesets.NormalizeRuleID(id)
+		if canonical != id {
+			if _, exists := normalized[canonical]; exists {
+				continue
+			}
+		}
+		normalized[canonical] = severity
+	}
+	return normalized
 }

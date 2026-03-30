@@ -10,6 +10,7 @@ import (
 // by the DiagnosticTransformer.
 func RegisterAll(reg *barrelman.Registry) {
 	registerUnresolvedRef(reg)
+	registerSailPointAnalyzers(reg)
 	registerNamingAnalyzers(reg)
 	registerDocumentationAnalyzers(reg)
 	registerStructureAnalyzers(reg)

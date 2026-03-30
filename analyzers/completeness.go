@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	navigator "github.com/sailpoint-oss/navigator"
 	"github.com/sailpoint-oss/barrelman"
+	navigator "github.com/sailpoint-oss/navigator"
 )
 
 var (
@@ -34,9 +34,9 @@ var (
 		Description: "Operations should define at least one error response (4xx or 5xx).",
 		Severity:    barrelman.SeverityWarning,
 		Category:    barrelman.CategoryStructure,
-		Recommended: true,
+		Recommended: false,
 		HowToFix:    "Add error response definitions (e.g., 400, 404, 500) to the operation.",
-		DocURL:      barrelman.DocBaseURL + "missing-error-responses",
+		DocURL:      barrelman.GuidelineDocURL("403"),
 	}
 
 	responseBodyOnDeleteMeta = barrelman.RuleMeta{
@@ -66,7 +66,7 @@ var (
 		Category:    barrelman.CategoryStructure,
 		Recommended: false,
 		HowToFix:    "Add pagination query parameters (e.g., page, pageSize, limit, offset).",
-		DocURL:      barrelman.DocBaseURL + "missing-pagination",
+		DocURL:      barrelman.GuidelineDocURL("602"),
 	}
 
 	inconsistentErrorShapeMeta = barrelman.RuleMeta{

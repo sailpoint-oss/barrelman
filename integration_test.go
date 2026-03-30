@@ -100,25 +100,120 @@ paths:
       responses:
         "200":
           description: A list of pets
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
         "401":
           description: Unauthorized
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: https://example.com/problems/unauthorized
+                title: Unauthorized
+                status: 401
+                detail: Authentication is required.
+                instance: /pets
+                correlationId: 123e4567-e89b-12d3-a456-426614174000
+        "403":
+          description: Forbidden
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: https://example.com/problems/forbidden
+                title: Forbidden
+                status: 403
+                detail: You do not have access to this resource.
+                instance: /pets
+                correlationId: 123e4567-e89b-12d3-a456-426614174000
         "500":
           description: Internal server error
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: https://example.com/problems/internal
+                title: Internal Server Error
+                status: 500
+                detail: An unexpected error occurred.
+                instance: /pets
+                correlationId: 123e4567-e89b-12d3-a456-426614174000
 components:
+  headers:
+    X-Request-Id:
+      description: Request correlation id.
+      schema:
+        type: string
+        format: uuid
   schemas:
     Pet:
       type: object
       description: A pet in the store.
+      required: []
       properties:
         name:
           type: string
+          description: The pet's display name.
+          example: Fido
+    ProblemDetails:
+      type: object
+      required:
+        - type
+        - title
+        - status
+        - detail
+        - instance
+        - correlationId
+      properties:
+        type:
+          type: string
+          description: Problem type URI.
+          example: https://example.com/problems/internal
+        title:
+          type: string
+          description: Short human-readable summary.
+          example: Internal Server Error
+        status:
+          type: integer
+          format: int32
+          description: HTTP status code.
+          example: 500
+        detail:
+          type: string
+          description: Human-readable explanation of the problem.
+          example: An unexpected error occurred.
+        instance:
+          type: string
+          description: URI for this specific error occurrence.
+          example: /pets
+        correlationId:
+          type: string
+          description: Request correlation identifier.
+          example: 123e4567-e89b-12d3-a456-426614174000
   securitySchemes:
     BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.example.com/oauth/token
+          scopes:
+            "catalog:pets:read": Read pet data
 security:
-  - BearerAuth: []`
+  - BearerAuth:
+      - catalog:pets:read`
 
 	diags := lintYAML(t, spec)
 
@@ -356,11 +451,11 @@ components:
 		"schema-name-capital",
 		"no-api-key-in-query",
 		"owasp-no-api-keys-in-url",
-		"operation-operationId",
+		"sp-122",
 		"operation-description",
-		"operation-tags",
-		"missing-error-responses",
-		"security-global-or-operation",
+		"sp-123",
+		"sp-403",
+		"sp-300",
 	}
 
 	codes := make(map[string]bool)

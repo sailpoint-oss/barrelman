@@ -1,8 +1,8 @@
 package analyzers
 
 import (
-	navigator "github.com/sailpoint-oss/navigator"
 	"github.com/sailpoint-oss/barrelman"
+	navigator "github.com/sailpoint-oss/navigator"
 )
 
 var (
@@ -21,9 +21,9 @@ var (
 		Description: "Server URLs should use HTTPS.",
 		Severity:    barrelman.SeverityWarning,
 		Category:    barrelman.CategoryServers,
-		Recommended: true,
+		Recommended: false,
 		HowToFix:    "Change the server URL to use https:// instead of http://.",
-		DocURL:      barrelman.DocBaseURL + "server-url-https",
+		DocURL:      barrelman.GuidelineDocURL("304"),
 	}
 )
 

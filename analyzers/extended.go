@@ -1,19 +1,19 @@
 package analyzers
 
 import (
-	navigator "github.com/sailpoint-oss/navigator"
 	"github.com/sailpoint-oss/barrelman"
+	navigator "github.com/sailpoint-oss/navigator"
 )
 
 var (
 	operationDescriptionMeta = barrelman.RuleMeta{ID: "operation-description", Description: "Operations should have descriptions.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: true, DocURL: barrelman.DocBaseURL + "operation-description"}
-	operationTagsMeta        = barrelman.RuleMeta{ID: "operation-tags", Description: "Operations should have at least one tag.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: true, DocURL: barrelman.DocBaseURL + "operation-tags"}
-	operationOperationIDMeta = barrelman.RuleMeta{ID: "operation-operationId", Description: "Operations should have operationId.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: true, DocURL: barrelman.DocBaseURL + "operation-operationId"}
+	operationTagsMeta        = barrelman.RuleMeta{ID: "operation-tags", Description: "Operations should have at least one tag.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: false, DocURL: barrelman.GuidelineDocURL("123")}
+	operationOperationIDMeta = barrelman.RuleMeta{ID: "operation-operationId", Description: "Operations should have operationId.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: false, DocURL: barrelman.GuidelineDocURL("122")}
 	infoDescriptionMeta      = barrelman.RuleMeta{ID: "info-description", Description: "Info should have a description.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: true, DocURL: barrelman.DocBaseURL + "info-description"}
 	infoContactMeta          = barrelman.RuleMeta{ID: "info-contact", Description: "Info should have contact information.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: true, DocURL: barrelman.DocBaseURL + "info-contact"}
 	infoLicenseMeta          = barrelman.RuleMeta{ID: "info-license", Description: "Info should have license information.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: true, DocURL: barrelman.DocBaseURL + "info-license"}
 	tagDescriptionMeta       = barrelman.RuleMeta{ID: "tag-description", Description: "Tags should have descriptions.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: true, DocURL: barrelman.DocBaseURL + "tag-description"}
-	parameterDescriptionMeta = barrelman.RuleMeta{ID: "parameter-description", Description: "Parameters should have descriptions.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: false, DocURL: barrelman.DocBaseURL + "parameter-description"}
+	parameterDescriptionMeta = barrelman.RuleMeta{ID: "parameter-description", Description: "Parameters should have descriptions.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: false, DocURL: barrelman.GuidelineDocURL("115")}
 	responseDescriptionMeta  = barrelman.RuleMeta{ID: "response-description", Description: "Responses should have descriptions.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: true, DocURL: barrelman.DocBaseURL + "response-description"}
 	schemaDescriptionMeta    = barrelman.RuleMeta{ID: "schema-description", Description: "Component schemas should have descriptions.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: false, DocURL: barrelman.DocBaseURL + "schema-description"}
 )

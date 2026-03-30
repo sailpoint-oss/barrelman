@@ -208,9 +208,9 @@ func TestRuleDefinition_UnmarshalYAML_InRulesMap(t *testing.T) {
 rules:
   info-contact: error
   info-description: false
-  operation-tags:
+  sp-123:
     severity: warn
-    description: "Operations should have tags"
+    description: "Provide a tag for every operation"
   custom-rule: ["hint", {"message": "check this"}]
 `
 	var rs RuleSet
@@ -230,14 +230,14 @@ rules:
 		t.Errorf("info-description severity = %q, want %q", def.Severity, "off")
 	}
 
-	if def, ok := rs.Rules["operation-tags"]; !ok {
-		t.Error("operation-tags not found in rules")
+	if def, ok := rs.Rules["sp-123"]; !ok {
+		t.Error("sp-123 not found in rules")
 	} else {
 		if def.Severity != "warn" {
-			t.Errorf("operation-tags severity = %q, want %q", def.Severity, "warn")
+			t.Errorf("sp-123 severity = %q, want %q", def.Severity, "warn")
 		}
-		if def.Description != "Operations should have tags" {
-			t.Errorf("operation-tags description = %q, want %q", def.Description, "Operations should have tags")
+		if def.Description != "Provide a tag for every operation" {
+			t.Errorf("sp-123 description = %q, want %q", def.Description, "Provide a tag for every operation")
 		}
 	}
 

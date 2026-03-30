@@ -8,7 +8,7 @@ import (
 
 var testBuiltinCatalog = []CatalogRule{
 	{ID: "info-description", Severity: SeverityWarning, Category: "documentation", Recommended: true},
-	{ID: "operation-tags", Severity: SeverityWarning, Category: "documentation", Recommended: true},
+	{ID: "sp-123", Severity: SeverityError, Category: "documentation", Recommended: true},
 	{ID: "owasp-no-api-keys-in-url", Severity: SeverityError, Category: "owasp", Recommended: false},
 	{ID: "schema-name-capital", Severity: SeverityWarning, Category: "naming", Recommended: false},
 }

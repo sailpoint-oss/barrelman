@@ -162,7 +162,7 @@ func (c *Config) BuildEnabledRules() map[string]bool {
 
 	// Apply config-level overrides
 	for id, sev := range c.Rules {
-		rs.Rules[id] = rulesets.RuleDefinition{Severity: sev}
+		rs.Rules[rulesets.NormalizeRuleID(id)] = rulesets.RuleDefinition{Severity: sev}
 	}
 
 	return rulesets.BuildEnabledMap(rs)

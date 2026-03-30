@@ -1,8 +1,8 @@
 package analyzers
 
 import (
-	navigator "github.com/sailpoint-oss/navigator"
 	"github.com/sailpoint-oss/barrelman"
+	navigator "github.com/sailpoint-oss/navigator"
 )
 
 var (
@@ -31,9 +31,9 @@ var (
 		Description: "Security should be defined globally or on every operation.",
 		Severity:    barrelman.SeverityWarning,
 		Category:    barrelman.CategorySecurity,
-		Recommended: true,
+		Recommended: false,
 		HowToFix:    "Add security requirements either globally or to each operation.",
-		DocURL:      barrelman.DocBaseURL + "security-global-or-operation",
+		DocURL:      barrelman.GuidelineDocURL("300"),
 	}
 
 	securitySchemesDefinedMeta = barrelman.RuleMeta{

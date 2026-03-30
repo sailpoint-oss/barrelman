@@ -34,9 +34,9 @@ var (
 		Description: "Every operationId must be unique across the entire API.",
 		Severity:    barrelman.SeverityError,
 		Category:    barrelman.CategoryNaming,
-		Recommended: true,
+		Recommended: false,
 		HowToFix:    "Give each operation a unique operationId.",
-		DocURL:      barrelman.DocBaseURL + "operation-operationId-unique",
+		DocURL:      barrelman.GuidelineDocURL("122"),
 	}
 
 	tagsFormatMeta = barrelman.RuleMeta{
