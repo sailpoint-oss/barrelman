@@ -70,7 +70,11 @@ func registerSP104PropertyCamelCase(reg *barrelman.Registry) {
 					continue
 				}
 				loc := propertyLoc(prop, schema)
-				r.At(loc, "[#104] Property '%s' at %s must use lowerCamelCase", propName, pointerForProperty(pointer, propName))
+				if name := SchemaNameFromPointer(pointer); name != "" {
+					r.At(loc, "[#104] Property '%s' in Schema Object '%s' must use lowerCamelCase", propName, name)
+				} else {
+					r.At(loc, "[#104] Property '%s' at %s must use lowerCamelCase", propName, pointerForProperty(pointer, propName))
+				}
 			}
 		})
 	}).Register(reg)
@@ -179,7 +183,11 @@ func registerSP112EnumCase(reg *barrelman.Registry) {
 			if upperSnakeRe.MatchString(value) {
 				continue
 			}
-			r.At(schema.Loc, "[#112] Enum value '%s' at %s must use UPPER_SNAKE_CASE", value, pointer)
+			if name := SchemaNameFromPointer(pointer); name != "" {
+				r.At(schema.Loc, "[#112] Enum value '%s' in Schema Object '%s' must use UPPER_SNAKE_CASE", value, name)
+			} else {
+				r.At(schema.Loc, "[#112] Enum value '%s' at %s must use UPPER_SNAKE_CASE", value, pointer)
+			}
 			return
 		}
 	}).Register(reg)
@@ -210,7 +218,11 @@ func registerSP115Descriptions(reg *barrelman.Registry) {
 					continue
 				}
 				loc := propertyLoc(prop, schema)
-				r.At(loc, "[#115] Property '%s' at %s must include a description", propName, pointerForProperty(pointer, propName))
+				if name := SchemaNameFromPointer(pointer); name != "" {
+					r.At(loc, "[#115] Property '%s' in Schema Object '%s' must include a description", propName, name)
+				} else {
+					r.At(loc, "[#115] Property '%s' at %s must include a description", propName, pointerForProperty(pointer, propName))
+				}
 			}
 		})
 	}).Register(reg)
@@ -252,7 +264,11 @@ func registerSP116Examples(reg *barrelman.Registry) {
 					continue
 				}
 				loc := propertyLoc(prop, schema)
-				r.At(loc, "[#116] Property '%s' at %s must include an example", propName, pointerForProperty(pointer, propName))
+				if name := SchemaNameFromPointer(pointer); name != "" {
+					r.At(loc, "[#116] Property '%s' in Schema Object '%s' must include an example", propName, name)
+				} else {
+					r.At(loc, "[#116] Property '%s' at %s must include an example", propName, pointerForProperty(pointer, propName))
+				}
 			}
 		})
 	}).Register(reg)
@@ -751,7 +767,11 @@ func registerSP701NoNullableBooleans(reg *barrelman.Registry) {
 
 	barrelman.Define(meta.ID, meta).RecursiveSchemas(func(name string, schema *navigator.Schema, pointer string, r *barrelman.Reporter) {
 		if schema.Type == "boolean" && schema.Nullable {
-			r.At(schema.Loc, "[#701] Boolean schema at %s must not be nullable", pointer)
+			if name := SchemaNameFromPointer(pointer); name != "" {
+				r.At(schema.Loc, "[#701] Boolean property in Schema Object '%s' must not be nullable", name)
+			} else {
+				r.At(schema.Loc, "[#701] Boolean schema at %s must not be nullable", pointer)
+			}
 		}
 	}).Register(reg)
 }
@@ -766,7 +786,11 @@ func registerSP702NoNullableArrays(reg *barrelman.Registry) {
 
 	barrelman.Define(meta.ID, meta).RecursiveSchemas(func(name string, schema *navigator.Schema, pointer string, r *barrelman.Reporter) {
 		if schema.Type == "array" && schema.Nullable {
-			r.At(schema.Loc, "[#702] Array schema at %s must not be nullable", pointer)
+			if name := SchemaNameFromPointer(pointer); name != "" {
+				r.At(schema.Loc, "[#702] Array property in Schema Object '%s' must not be nullable", name)
+			} else {
+				r.At(schema.Loc, "[#702] Array schema at %s must not be nullable", pointer)
+			}
 		}
 	}).Register(reg)
 }
@@ -783,16 +807,28 @@ func registerSP804NumericTypes(reg *barrelman.Registry) {
 		walkAllSchemas(idx, func(name string, schema *navigator.Schema, pointer string) {
 			schemaName := nameFromPointer(pointer, name)
 			if looksLikeID(schemaName) && (schema.Type == "integer" || schema.Type == "number") {
-				r.At(schema.Loc, "[#804] Identifier schema at %s must use type string instead of %s", pointer, schema.Type)
+				if sn := SchemaNameFromPointer(pointer); sn != "" {
+					r.At(schema.Loc, "[#804] Identifier schema in Schema Object '%s' must use type string instead of %s", sn, schema.Type)
+				} else {
+					r.At(schema.Loc, "[#804] Identifier schema at %s must use type string instead of %s", pointer, schema.Type)
+				}
 			}
 			switch schema.Type {
 			case "integer":
 				if schema.Format != "int32" && schema.Format != "int64" {
-					r.At(schema.Loc, "[#804] Integer schema at %s must declare format int32 or int64", pointer)
+					if sn := SchemaNameFromPointer(pointer); sn != "" {
+						r.At(schema.Loc, "[#804] Integer property in Schema Object '%s' must declare format int32 or int64", sn)
+					} else {
+						r.At(schema.Loc, "[#804] Integer schema at %s must declare format int32 or int64", pointer)
+					}
 				}
 			case "number":
 				if schema.Format != "float" && schema.Format != "double" {
-					r.At(schema.Loc, "[#804] Number schema at %s must declare format float or double", pointer)
+					if sn := SchemaNameFromPointer(pointer); sn != "" {
+						r.At(schema.Loc, "[#804] Number property in Schema Object '%s' must declare format float or double", sn)
+					} else {
+						r.At(schema.Loc, "[#804] Number schema at %s must declare format float or double", pointer)
+					}
 				}
 			}
 			for propName, prop := range schema.Properties {
@@ -800,7 +836,11 @@ func registerSP804NumericTypes(reg *barrelman.Registry) {
 					continue
 				}
 				if looksLikeID(propName) && (prop.Type == "integer" || prop.Type == "number") {
-					r.At(propertyLoc(prop, schema), "[#804] Identifier property '%s' at %s must use type string", propName, pointerForProperty(pointer, propName))
+					if sn := SchemaNameFromPointer(pointer); sn != "" {
+						r.At(propertyLoc(prop, schema), "[#804] Identifier property '%s' in Schema Object '%s' must use type string", propName, sn)
+					} else {
+						r.At(propertyLoc(prop, schema), "[#804] Identifier property '%s' at %s must use type string", propName, pointerForProperty(pointer, propName))
+					}
 				}
 			}
 		})

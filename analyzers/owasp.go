@@ -48,7 +48,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 	barrelman.Define("owasp-no-http-basic", owaspNoHTTPBasicMeta).SecuritySchemes(
 		func(name string, ss *navigator.SecurityScheme, r *barrelman.Reporter) {
 			if ss.Type == "http" && strings.EqualFold(ss.Scheme, "basic") {
-				r.At(ss.Loc, "Security scheme '%s' uses HTTP Basic; consider a stronger mechanism", name)
+				r.At(ss.Loc, "Security Scheme '%s' uses HTTP Basic; consider a stronger mechanism", name)
 			}
 		},
 	).Register(reg)
@@ -56,7 +56,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 	barrelman.Define("owasp-no-api-keys-in-url", owaspNoAPIKeysInURLMeta).SecuritySchemes(
 		func(name string, ss *navigator.SecurityScheme, r *barrelman.Reporter) {
 			if ss.Type == "apiKey" && (ss.In == "query" || ss.In == "path") {
-				r.At(ss.Loc, "Security scheme '%s' passes API key in %s; use header instead", name, ss.In)
+				r.At(ss.Loc, "Security Scheme '%s' passes API key in %s; use header instead", name, ss.In)
 			}
 		},
 	).Register(reg)
@@ -64,7 +64,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 	barrelman.Define("owasp-no-credentials-in-url", owaspNoCredentialsInURLMeta).Servers(
 		func(server *navigator.Server, r *barrelman.Reporter) {
 			if containsCredentials(server.URL) {
-				r.At(server.URLLoc, "Server URL should not contain credentials")
+				r.At(server.URLLoc, "Server Object URL should not contain credentials")
 			}
 		},
 	).Register(reg)
@@ -73,7 +73,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 		func(name string, ss *navigator.SecurityScheme, r *barrelman.Reporter) {
 			insecure := map[string]bool{"negotiate": true, "oauth": true}
 			if ss.Type == "http" && insecure[strings.ToLower(ss.Scheme)] {
-				r.At(ss.Loc, "Security scheme '%s' uses insecure scheme '%s'", name, ss.Scheme)
+				r.At(ss.Loc, "Security Scheme '%s' uses insecure scheme '%s'", name, ss.Scheme)
 			}
 		},
 	).Register(reg)
@@ -81,7 +81,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 	barrelman.Define("owasp-jwt-best-practices", owaspJWTBestPracticesMeta).SecuritySchemes(
 		func(name string, ss *navigator.SecurityScheme, r *barrelman.Reporter) {
 			if ss.Type == "http" && strings.EqualFold(ss.Scheme, "bearer") && ss.BearerFormat == "" {
-				r.At(ss.Loc, "Security scheme '%s' should specify bearerFormat (e.g., JWT)", name)
+				r.At(ss.Loc, "Security Scheme '%s' should specify bearerFormat (e.g., JWT)", name)
 			}
 		},
 	).Register(reg)
@@ -167,7 +167,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 			nameLower := strings.ToLower(name)
 			if (strings.HasSuffix(nameLower, "id") || strings.HasSuffix(nameLower, "_id")) &&
 				(schema.Type == "integer" || schema.Type == "number") {
-				r.At(schema.Loc, "Schema '%s' at %s uses numeric ID; consider UUID", name, pointer)
+				r.At(schema.Loc, "%s uses numeric ID; consider UUID", InferContextFromPointer(pointer))
 			}
 		},
 	).Register(reg)
@@ -176,7 +176,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 		func(name string, schema *navigator.Schema, pointer string, r *barrelman.Reporter) {
 			if schema.Type == "object" && len(schema.Properties) > 0 &&
 				schema.AdditionalProperties == nil && !schema.AdditionalPropertiesFalse {
-				r.At(schema.Loc, "Schema at %s should restrict additionalProperties", pointer)
+				r.At(schema.Loc, "%s should restrict additionalProperties", InferContextFromPointer(pointer))
 			}
 		},
 	).Register(reg)
@@ -190,7 +190,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 			hasConstraints := ap.MaxLength != nil || ap.Maximum != nil || ap.MaxItems != nil ||
 				len(ap.Enum) > 0 || ap.Pattern != ""
 			if !hasConstraints {
-				r.At(schema.Loc, "Additional properties at %s should have constraints (maxLength, maximum, etc.)", pointer)
+				r.At(schema.Loc, "Additional properties in %s should have constraints (maxLength, maximum, etc.)", InferContextFromPointer(pointer))
 			}
 		},
 	).Register(reg)
@@ -201,7 +201,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 				!schema.HasConst &&
 				schema.Format != "date" && schema.Format != "date-time" && schema.Format != "uuid" &&
 				schema.Format != "email" && schema.Format != "uri" && schema.Format != "binary" {
-				r.At(schema.Loc, "String schema at %s should define maxLength", pointer)
+				r.At(schema.Loc, "String schema in %s should define maxLength", InferContextFromPointer(pointer))
 			}
 		},
 	).Register(reg)
@@ -236,7 +236,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 			walkAllSchemas(idx, func(name string, schema *navigator.Schema, pointer string) {
 				if schema.Type == "object" && len(schema.Properties) > 0 &&
 					schema.UnevaluatedProperties == nil && !schema.UnevaluatedPropertiesFalse {
-					r.At(schema.Loc, "Schema at %s should set unevaluatedProperties to false", pointer)
+					r.At(schema.Loc, "%s should set unevaluatedProperties to false", InferContextFromPointer(pointer))
 				}
 			})
 		},
@@ -249,7 +249,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 			}
 			walkAllSchemas(idx, func(name string, schema *navigator.Schema, pointer string) {
 				if schema.UnevaluatedProperties != nil && schema.MaxProperties == nil {
-					r.At(schema.Loc, "Schema at %s with unevaluatedProperties schema should define maxProperties", pointer)
+					r.At(schema.Loc, "%s with unevaluatedProperties schema should define maxProperties", InferContextFromPointer(pointer))
 				}
 			})
 		},
@@ -275,7 +275,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 	barrelman.Define("owasp-array-limit", owaspArrayLimitMeta).Schemas(
 		func(name string, schema *navigator.Schema, pointer string, r *barrelman.Reporter) {
 			if schema.Type == "array" && schema.MaxItems == nil {
-				r.At(schema.Loc, "Array schema at %s should define maxItems", pointer)
+				r.At(schema.Loc, "Array schema in %s should define maxItems", InferContextFromPointer(pointer))
 			}
 		},
 	).Register(reg)
@@ -284,7 +284,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 		func(name string, schema *navigator.Schema, pointer string, r *barrelman.Reporter) {
 			if schema.Type == "string" && schema.Format == "" && schema.Pattern == "" &&
 				schema.Enum == nil && !schema.HasConst {
-				r.At(schema.Loc, "String schema at %s should specify format, pattern, enum, or const", pointer)
+				r.At(schema.Loc, "String schema in %s should specify format, pattern, enum, or const", InferContextFromPointer(pointer))
 			}
 		},
 	).Register(reg)
@@ -301,7 +301,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 				hasLower := schema.Minimum != nil || schema.ExclusiveMinimum != nil
 				hasUpper := schema.Maximum != nil || schema.ExclusiveMaximum != nil
 				if !hasLower || !hasUpper {
-					r.At(schema.Loc, "Integer schema at %s should define minimum/exclusiveMinimum and maximum/exclusiveMaximum", pointer)
+					r.At(schema.Loc, "Integer schema in %s should define minimum/exclusiveMinimum and maximum/exclusiveMaximum", InferContextFromPointer(pointer))
 				}
 			})
 		},
@@ -314,7 +314,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 			}
 			walkAllSchemas(idx, func(name string, schema *navigator.Schema, pointer string) {
 				if schema.Type == "integer" && (schema.Minimum == nil || schema.Maximum == nil) {
-					r.At(schema.Loc, "Integer schema at %s should define minimum and maximum", pointer)
+					r.At(schema.Loc, "Integer schema in %s should define minimum and maximum", InferContextFromPointer(pointer))
 				}
 			})
 		},
@@ -323,7 +323,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 	barrelman.Define("owasp-integer-format", owaspIntegerFormatMeta).Schemas(
 		func(name string, schema *navigator.Schema, pointer string, r *barrelman.Reporter) {
 			if schema.Type == "integer" && schema.Format == "" {
-				r.At(schema.Loc, "Integer schema at %s should specify format (int32 or int64)", pointer)
+				r.At(schema.Loc, "Integer schema in %s should specify format (int32 or int64)", InferContextFromPointer(pointer))
 			}
 		},
 	).Register(reg)
@@ -410,7 +410,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 				if strings.HasPrefix(lower, "https://") || strings.HasPrefix(lower, "wss://") {
 					continue
 				}
-				r.At(srv.URLLoc, "Server URL '%s' must use https:// or wss://", srv.URL)
+				r.At(srv.URLLoc, "Server Object URL '%s' must use https:// or wss://", srv.URL)
 			}
 		},
 	).Register(reg)
@@ -418,7 +418,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 	barrelman.Define("owasp-inventory-access", owaspInventoryAccessMeta).Servers(
 		func(server *navigator.Server, r *barrelman.Reporter) {
 			if _, ok := server.Extensions["x-internal"]; !ok {
-				r.At(server.Loc, "Server '%s' should declare x-internal: true or false", server.URL)
+				r.At(server.Loc, "Server Object '%s' should declare x-internal: true or false", server.URL)
 			}
 		},
 	).Register(reg)
@@ -431,7 +431,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 					return
 				}
 			}
-			r.At(server.Loc, "Server '%s' description should include environment (production, staging, etc.)", server.URL)
+			r.At(server.Loc, "Server Object '%s' description should include environment (production, staging, etc.)", server.URL)
 		},
 	).Register(reg)
 }
