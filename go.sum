@@ -30,8 +30,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=
 github.com/rogpeppe/go-internal v1.14.1/go.mod h1:MaRKkUm5W0goXpeCfT7UZI6fk/L7L7so1lCWt35ZSgc=
-github.com/sailpoint-oss/navigator v0.6.0 h1:cKniFbrCZFlJI7n2OsUaJ85XI89UJcnJUBIQJTvK84c=
-github.com/sailpoint-oss/navigator v0.6.0/go.mod h1:iVh7sjbrrUVMUvMbjWEqlHTzxnlm1VhdzXDxjmCPfok=
+github.com/sailpoint-oss/navigator v0.7.0 h1:n4W7R0DLHweJIO6lUuDqcd5wkO5HHOI74fc7mLHy0Us=
+github.com/sailpoint-oss/navigator v0.7.0/go.mod h1:iVh7sjbrrUVMUvMbjWEqlHTzxnlm1VhdzXDxjmCPfok=
 github.com/sailpoint-oss/tree-sitter-openapi v0.1.0 h1:Vgv/dTfNrItDpK3p1A7yr33gdOzVf6Kfgqu5mQ/6Mjk=
 github.com/sailpoint-oss/tree-sitter-openapi v0.1.0/go.mod h1:cl6yh1ylyM6f20nIj1dHj+GxMvGt44zmfgHApacMNj0=
 github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 h1:KRzFb2m7YtdldCEkzs6KqmJw4nqEVZGK7IN2kJkjTuQ=
