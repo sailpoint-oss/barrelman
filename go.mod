@@ -3,7 +3,7 @@ module github.com/sailpoint-oss/barrelman
 go 1.25.0
 
 require (
-	github.com/sailpoint-oss/navigator v0.9.0
+	github.com/sailpoint-oss/navigator v0.11.0
 	github.com/tree-sitter/go-tree-sitter v0.25.0
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
 	github.com/yuin/goldmark v1.7.16
