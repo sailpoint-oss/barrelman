@@ -2,6 +2,7 @@ package analyzers
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/sailpoint-oss/barrelman"
 	navigator "github.com/sailpoint-oss/navigator"
@@ -33,9 +34,52 @@ func registerStructuralValidation(reg *barrelman.Registry) {
 					TargetVersion: ctx.TargetVersion,
 				})
 			}
+			issues = filterRedundantParentIssues(issues)
 			return issuesToOAS3Diagnostics(ctx, issues)
 		},
 	})
+}
+
+// filterRedundantParentIssues removes generic wrapper errors (meta.ref,
+// meta.group) when more specific child errors exist at the same or deeper
+// JSON Pointer. This eliminates noise like "Validation failed... (see nested
+// causes)" when the actual cause (e.g., "not a valid property") is also reported.
+func filterRedundantParentIssues(issues []navigator.Issue) []navigator.Issue {
+	redundantCodes := map[string]bool{
+		"meta.ref":   true,
+		"meta.group": true,
+	}
+
+	filtered := make([]navigator.Issue, 0, len(issues))
+	for _, iss := range issues {
+		if !redundantCodes[iss.Code] {
+			filtered = append(filtered, iss)
+			continue
+		}
+		// Keep the parent error only if no more specific error exists
+		if !hasMoreSpecificIssue(iss.Pointer, iss.Code, issues) {
+			filtered = append(filtered, iss)
+		}
+	}
+	return filtered
+}
+
+// hasMoreSpecificIssue checks if any other issue exists at the same pointer
+// with a non-wrapper code, or at a deeper (child) pointer.
+func hasMoreSpecificIssue(parentPtr, parentCode string, issues []navigator.Issue) bool {
+	prefix := parentPtr + "/"
+	for _, other := range issues {
+		// Child pointer: more specific location
+		if strings.HasPrefix(other.Pointer, prefix) {
+			return true
+		}
+		// Same pointer, different (non-wrapper) code
+		if other.Pointer == parentPtr && other.Code != parentCode &&
+			other.Code != "meta.ref" && other.Code != "meta.group" {
+			return true
+		}
+	}
+	return false
 }
 
 func issuesToOAS3Diagnostics(ctx *barrelman.AnalysisContext, issues []navigator.Issue) []barrelman.Diagnostic {
