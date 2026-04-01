@@ -34,13 +34,15 @@ func registerUnresolvedRef(reg *barrelman.Registry) {
 					continue
 				}
 
+				componentType := InferComponentTypeFromRef(target)
+
 				if strings.HasPrefix(target, "#") {
 					suggestion := findClosestRef(target, idx)
 					for _, usage := range usages {
 						if suggestion != "" {
-							r.At(usage.Loc, "Cannot resolve $ref: %s. Did you mean '%s'?", target, suggestion)
+							r.At(usage.Loc, "Cannot resolve $ref to %s: %s. Did you mean '%s'?", componentType, target, suggestion)
 						} else {
-							r.At(usage.Loc, "Cannot resolve $ref: %s", target)
+							r.At(usage.Loc, "Cannot resolve $ref to %s: %s", componentType, target)
 						}
 					}
 					continue
@@ -53,7 +55,7 @@ func registerUnresolvedRef(reg *barrelman.Registry) {
 				}
 
 				for _, usage := range usages {
-					r.At(usage.Loc, "Cannot resolve $ref: %s", target)
+					r.At(usage.Loc, "Cannot resolve $ref to %s: %s", componentType, target)
 				}
 			}
 
