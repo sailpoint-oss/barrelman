@@ -3,6 +3,7 @@ package barrelman
 import (
 	"sync"
 
+	"github.com/sailpoint-oss/barrelman/codemod"
 	navigator "github.com/sailpoint-oss/navigator"
 )
 
@@ -44,12 +45,26 @@ type RuleMeta struct {
 	SpectralID   string
 }
 
+// FixFunc produces zero or more codemod Patches from a diagnostic.
+// Rules attach a FixFunc via RuleBuilder.Fix; the framework calls it
+// for every diagnostic the rule emitted that has an associated
+// ByteRange and a source document available on the FixContext.
+//
+// Implementations should be idempotent: returning an empty slice when
+// the underlying condition is already resolved keeps re-running the
+// fixer safe.
+type FixFunc func(ctx *codemod.FixContext, diag Diagnostic) ([]codemod.Patch, error)
+
 // Rule is the self-contained unit of analysis. Every semantic analyzer, syntax
 // check, spectral rule, and structural validator compiles down to this type.
+//
+// Fix is optional; rules without a Fix still run normally and emit
+// diagnostics, they just do not contribute to auto-fix passes.
 type Rule struct {
 	ID   string
 	Meta RuleMeta
 	Run  func(ctx *AnalysisContext) []Diagnostic
+	Fix  FixFunc
 }
 
 // Registry provides thread-safe storage for rule metadata AND built Rule

@@ -48,32 +48,32 @@ func (r *Reporter) WithData(data interface{}) *Reporter {
 
 // At reports a diagnostic at the location of an OpenAPI model element.
 func (r *Reporter) At(loc navigator.Loc, format string, args ...any) {
-	r.report(loc.Range, r.severity, fmt.Sprintf(format, args...))
+	r.report(loc.Range, byteRangeOf(loc), r.severity, fmt.Sprintf(format, args...))
 }
 
 // AtRange reports a diagnostic at an explicit range.
 func (r *Reporter) AtRange(rng Range, format string, args ...any) {
-	r.report(rng, r.severity, fmt.Sprintf(format, args...))
+	r.report(rng, ByteRange{}, r.severity, fmt.Sprintf(format, args...))
 }
 
 // Error reports an error-severity diagnostic at the given location.
 func (r *Reporter) Error(loc navigator.Loc, format string, args ...any) {
-	r.report(loc.Range, SeverityError, fmt.Sprintf(format, args...))
+	r.report(loc.Range, byteRangeOf(loc), SeverityError, fmt.Sprintf(format, args...))
 }
 
 // Warn reports a warning-severity diagnostic at the given location.
 func (r *Reporter) Warn(loc navigator.Loc, format string, args ...any) {
-	r.report(loc.Range, SeverityWarning, fmt.Sprintf(format, args...))
+	r.report(loc.Range, byteRangeOf(loc), SeverityWarning, fmt.Sprintf(format, args...))
 }
 
 // ErrorAtRange reports an error-severity diagnostic at an explicit range.
 func (r *Reporter) ErrorAtRange(rng Range, format string, args ...any) {
-	r.report(rng, SeverityError, fmt.Sprintf(format, args...))
+	r.report(rng, ByteRange{}, SeverityError, fmt.Sprintf(format, args...))
 }
 
 // WarnAtRange reports a warning-severity diagnostic at an explicit range.
 func (r *Reporter) WarnAtRange(rng Range, format string, args ...any) {
-	r.report(rng, SeverityWarning, fmt.Sprintf(format, args...))
+	r.report(rng, ByteRange{}, SeverityWarning, fmt.Sprintf(format, args...))
 }
 
 // Diagnostics returns all reported diagnostics.
@@ -81,17 +81,30 @@ func (r *Reporter) Diagnostics() []Diagnostic {
 	return r.diags
 }
 
-func (r *Reporter) report(rng Range, sev Severity, msg string) {
+// byteRangeOf extracts the tree-sitter byte span from a Loc, or the
+// zero ByteRange when the Loc has no attached node.
+func byteRangeOf(loc navigator.Loc) ByteRange {
+	if loc.Node == nil {
+		return ByteRange{}
+	}
+	return ByteRange{
+		StartByte: uint(loc.Node.StartByte()),
+		EndByte:   uint(loc.Node.EndByte()),
+	}
+}
+
+func (r *Reporter) report(rng Range, br ByteRange, sev Severity, msg string) {
 	if rng.End.Line > rng.Start.Line {
 		rng.End = Position{Line: rng.Start.Line, Character: rng.Start.Character + 1000}
 	}
 
 	d := Diagnostic{
-		Range:    rng,
-		Severity: sev,
-		Source:   Source,
-		Code:     r.id,
-		Message:  msg,
+		Range:     rng,
+		ByteRange: br,
+		Severity:  sev,
+		Source:    Source,
+		Code:      r.id,
+		Message:   msg,
 	}
 	meta, ok := DefaultRegistry.Get(r.id)
 	if ok && meta.DocURL != "" {

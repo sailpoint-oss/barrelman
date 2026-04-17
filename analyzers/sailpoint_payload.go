@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/sailpoint-oss/barrelman"
+	"github.com/sailpoint-oss/barrelman/codemod/fixes"
 	navigator "github.com/sailpoint-oss/navigator"
 )
 
@@ -192,7 +193,7 @@ func registerSailpointPathParamRequired(reg *barrelman.Registry) {
 				}
 			}
 		}
-	}).Register(reg)
+	}).Fix(fixes.PathParamRequired).Register(reg)
 }
 
 // #804 (split 1/2) - Numeric schemas must declare approved formats.

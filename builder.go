@@ -1,6 +1,7 @@
 package barrelman
 
 import (
+	"github.com/sailpoint-oss/barrelman/codemod"
 	navigator "github.com/sailpoint-oss/navigator"
 )
 
@@ -11,6 +12,7 @@ type RuleBuilder struct {
 	id   string
 	meta RuleMeta
 	v    Visitors
+	fix  FixFunc
 }
 
 // Define begins building a new rule with the given ID and metadata.
@@ -103,6 +105,16 @@ func (b *RuleBuilder) Custom(fn func(idx *navigator.Index, r *Reporter)) *RuleBu
 	return b
 }
 
+// Fix attaches an auto-fix function to the rule. The framework calls
+// the function for each diagnostic the rule emits to produce
+// codemod.Patches that `telescope fix` and LSP code actions can apply.
+// Rules without a Fix still emit diagnostics normally; they simply do
+// not contribute to auto-fix passes.
+func (b *RuleBuilder) Fix(fn FixFunc) *RuleBuilder {
+	b.fix = fn
+	return b
+}
+
 // Meta returns the rule metadata.
 func (b *RuleBuilder) Meta() RuleMeta {
 	return b.meta
@@ -113,6 +125,7 @@ func (b *RuleBuilder) Build() Rule {
 	v := b.v
 	meta := b.meta
 	id := b.id
+	fix := b.fix
 	return Rule{
 		ID:   id,
 		Meta: meta,
@@ -124,8 +137,13 @@ func (b *RuleBuilder) Build() Rule {
 			Walk(ctx.Index, v, r)
 			return r.Diagnostics()
 		},
+		Fix: fix,
 	}
 }
+
+// ensure codemod is linked when the builder package is imported (the
+// field uses codemod.FixContext / Patch indirectly via FixFunc).
+var _ = codemod.Patch{}
 
 // Register builds the rule and adds it to the given registry.
 func (b *RuleBuilder) Register(reg *Registry) Rule {

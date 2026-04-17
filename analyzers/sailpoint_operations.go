@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/sailpoint-oss/barrelman"
+	"github.com/sailpoint-oss/barrelman/codemod/fixes"
 	navigator "github.com/sailpoint-oss/navigator"
 )
 
@@ -94,7 +95,7 @@ func registerSailpointCollectionOffsetPagination(reg *barrelman.Registry) {
 				}
 			}
 		}
-	}).Register(reg)
+	}).Fix(fixes.CollectionOffsetPagination).Register(reg)
 }
 
 // #602 (split 2/2) - Collection GET operations must wrap items in an object
@@ -158,7 +159,7 @@ func registerSailpointXRequestIDHeader(reg *barrelman.Registry) {
 				}
 			}
 		}
-	}).Register(reg)
+	}).Fix(fixes.XRequestIDHeader).Register(reg)
 }
 
 // #903 (split 2/3) - Components must define a shared X-Request-Id header.
@@ -176,7 +177,7 @@ func registerSailpointXRequestIDSharedComponent(reg *barrelman.Registry) {
 			return
 		}
 		r.AtRange(barrelman.FileStartRange, "Components must define a shared X-Request-Id header with type string and format uuid")
-	}).Register(reg)
+	}).Fix(fixes.XRequestIDSharedComponent).Register(reg)
 }
 
 // #903 (split 3/3) - X-Request-Id headers must use type string with format uuid.
@@ -203,5 +204,5 @@ func registerSailpointXRequestIDUUID(reg *barrelman.Registry) {
 				}
 			}
 		}
-	}).Register(reg)
+	}).Fix(fixes.XRequestIDUUID).Register(reg)
 }

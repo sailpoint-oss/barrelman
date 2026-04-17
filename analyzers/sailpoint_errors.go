@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/sailpoint-oss/barrelman"
+	"github.com/sailpoint-oss/barrelman/codemod/fixes"
 	navigator "github.com/sailpoint-oss/navigator"
 )
 
@@ -75,7 +76,7 @@ func registerSailpointOperation4xxResponse(reg *barrelman.Registry) {
 			r.At(navigator.LocOrFallback(op.ResponsesLoc, op.Loc),
 				"Operation %s %s must declare at least one 4xx response", strings.ToUpper(method), path)
 		}
-	}).Register(reg)
+	}).Fix(fixes.Operation4xxResponse).Register(reg)
 }
 
 // #403 (split 3/4) - Operations must declare a 401 response.
@@ -94,7 +95,7 @@ func registerSailpointOperation401Response(reg *barrelman.Registry) {
 		}
 		r.At(navigator.LocOrFallback(op.ResponsesLoc, op.Loc),
 			"Operation %s %s must declare a 401 response", strings.ToUpper(method), path)
-	}).Register(reg)
+	}).Fix(fixes.Operation401Response).Register(reg)
 }
 
 // #403 (split 4/4) - Operations must declare a 403 response.
@@ -113,7 +114,7 @@ func registerSailpointOperation403Response(reg *barrelman.Registry) {
 		}
 		r.At(navigator.LocOrFallback(op.ResponsesLoc, op.Loc),
 			"Operation %s %s must declare a 403 response", strings.ToUpper(method), path)
-	}).Register(reg)
+	}).Fix(fixes.Operation403Response).Register(reg)
 }
 
 // #404 (split 1/4) - Error responses must use application/problem+json.
@@ -139,7 +140,7 @@ func registerSailpointErrorProblemDetailsMediaType(reg *barrelman.Registry) {
 				}
 			}
 		}
-	}).Register(reg)
+	}).Fix(fixes.ErrorProblemDetailsMediaType).Register(reg)
 }
 
 // #404 (split 2/4) - Problem Details responses must declare the Problem Details fields.
@@ -217,7 +218,7 @@ func registerSailpointErrorProblemDetailsSharedComponent(reg *barrelman.Registry
 				}
 			}
 		}
-	}).Register(reg)
+	}).Fix(fixes.ErrorProblemDetailsSharedComponent).Register(reg)
 }
 
 // #404 (split 4/4) - Problem Details responses must include a correlationId property.
@@ -251,5 +252,5 @@ func registerSailpointErrorCorrelationID(reg *barrelman.Registry) {
 				}
 			}
 		}
-	}).Register(reg)
+	}).Fix(fixes.ErrorCorrelationID).Register(reg)
 }

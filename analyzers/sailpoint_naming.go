@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/sailpoint-oss/barrelman"
+	"github.com/sailpoint-oss/barrelman/codemod/fixes"
 	navigator "github.com/sailpoint-oss/navigator"
 )
 
@@ -212,7 +213,7 @@ func registerSailpointOperationSingleTag(reg *barrelman.Registry) {
 				}
 			}
 		}
-	}).Register(reg)
+	}).Fix(fixes.OperationSingleTag).Register(reg)
 }
 
 // #123 (split 2/2) - Every root tag must include a description.
@@ -229,7 +230,7 @@ func registerSailpointTagDocumented(reg *barrelman.Registry) {
 		if strings.TrimSpace(tag.Description.Text) == "" {
 			r.At(tag.Loc, "Root tag '%s' must include a description", tag.Name)
 		}
-	}).Register(reg)
+	}).Fix(fixes.TagDocumented).Register(reg)
 }
 
 // #115 (split 1/2) - Parameters must include descriptions.
@@ -253,7 +254,7 @@ func registerSailpointParameterDescription(reg *barrelman.Registry) {
 				}
 			}
 		}
-	}).Register(reg)
+	}).Fix(fixes.ParameterDescription).Register(reg)
 }
 
 // #115 (split 2/2) - Schema properties must include descriptions.
@@ -280,7 +281,7 @@ func registerSailpointPropertyDescription(reg *barrelman.Registry) {
 				}
 			}
 		})
-	}).Register(reg)
+	}).Fix(fixes.PropertyDescription).Register(reg)
 }
 
 // #116 (split 1/3) - Parameters must include examples.
@@ -304,7 +305,7 @@ func registerSailpointParameterExample(reg *barrelman.Registry) {
 				}
 			}
 		}
-	}).Register(reg)
+	}).Fix(fixes.ParameterExample).Register(reg)
 }
 
 // #116 (split 2/3) - Schema properties must include examples.
@@ -331,7 +332,7 @@ func registerSailpointPropertyExample(reg *barrelman.Registry) {
 				}
 			}
 		})
-	}).Register(reg)
+	}).Fix(fixes.PropertyExample).Register(reg)
 }
 
 // #116 (split 3/3) - Response payloads must include examples.
@@ -360,5 +361,5 @@ func registerSailpointResponseExample(reg *barrelman.Registry) {
 				}
 			}
 		}
-	}).Register(reg)
+	}).Fix(fixes.ResponseExample).Register(reg)
 }
