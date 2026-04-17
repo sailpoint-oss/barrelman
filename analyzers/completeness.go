@@ -29,15 +29,8 @@ var (
 		DocURL:      barrelman.DocBaseURL + "license-url",
 	}
 
-	missingErrorResponsesMeta = barrelman.RuleMeta{
-		ID:          "missing-error-responses",
-		Description: "Operations should define at least one error response (4xx or 5xx).",
-		Severity:    barrelman.SeverityWarning,
-		Category:    barrelman.CategoryStructure,
-		Recommended: false,
-		HowToFix:    "Add error response definitions (e.g., 400, 404, 500) to the operation.",
-		DocURL:      barrelman.GuidelineDocURL("403"),
-	}
+	// missing-error-responses has been replaced by
+	// sailpoint-operation-4xx-response (analyzers/sailpoint_errors.go).
 
 	responseBodyOnDeleteMeta = barrelman.RuleMeta{
 		ID:          "response-body-on-delete",
@@ -59,15 +52,8 @@ var (
 		DocURL:      barrelman.DocBaseURL + "no-request-body-on-get",
 	}
 
-	missingPaginationMeta = barrelman.RuleMeta{
-		ID:          "missing-pagination",
-		Description: "List endpoints returning arrays should include pagination parameters.",
-		Severity:    barrelman.SeverityInfo,
-		Category:    barrelman.CategoryStructure,
-		Recommended: false,
-		HowToFix:    "Add pagination query parameters (e.g., page, pageSize, limit, offset).",
-		DocURL:      barrelman.GuidelineDocURL("602"),
-	}
+	// missing-pagination has been replaced by
+	// sailpoint-collection-offset-pagination (analyzers/sailpoint_operations.go).
 
 	inconsistentErrorShapeMeta = barrelman.RuleMeta{
 		ID:          "inconsistent-error-shape",
@@ -81,24 +67,6 @@ var (
 )
 
 func registerCompletenessAnalyzers(reg *barrelman.Registry) {
-	barrelman.Define("missing-error-responses", missingErrorResponsesMeta).
-		Operations(func(path, method string, op *navigator.Operation, r *barrelman.Reporter) {
-			if len(op.Responses) == 0 {
-				return
-			}
-			hasError := false
-			for code := range op.Responses {
-				if strings.HasPrefix(code, "4") || strings.HasPrefix(code, "5") || code == "default" {
-					hasError = true
-					break
-				}
-			}
-			if !hasError {
-				r.At(navigator.LocOrFallback(op.ResponsesLoc, op.Loc), "Operation %s %s has no error responses (4xx/5xx)", strings.ToUpper(method), path)
-			}
-		}).
-		Register(reg)
-
 	barrelman.Define("response-body-on-delete", responseBodyOnDeleteMeta).
 		Operations(func(path, method string, op *navigator.Operation, r *barrelman.Reporter) {
 			if strings.ToUpper(method) != "DELETE" {
@@ -124,40 +92,6 @@ func registerCompletenessAnalyzers(reg *barrelman.Registry) {
 			if op.RequestBody != nil {
 				r.At(op.RequestBody.Loc, "%s %s should not have a request body", m, path)
 			}
-		}).
-		Register(reg)
-
-	barrelman.Define("missing-pagination", missingPaginationMeta).
-		Operations(func(path, method string, op *navigator.Operation, r *barrelman.Reporter) {
-			if strings.ToUpper(method) != "GET" {
-				return
-			}
-			returnsArray := false
-			for code, resp := range op.Responses {
-				if !strings.HasPrefix(code, "2") {
-					continue
-				}
-				for _, mt := range resp.Content {
-					if mt.Schema != nil && mt.Schema.Type == "array" {
-						returnsArray = true
-						break
-					}
-				}
-			}
-			if !returnsArray {
-				return
-			}
-			paginationNames := map[string]bool{
-				"page": true, "pagesize": true, "page_size": true,
-				"limit": true, "offset": true, "cursor": true,
-				"after": true, "before": true, "per_page": true,
-			}
-			for _, p := range op.Parameters {
-				if paginationNames[strings.ToLower(p.Name)] {
-					return
-				}
-			}
-			r.At(navigator.LocOrFallback(op.ParametersLoc, op.Loc), "GET %s returns an array but has no pagination parameters", path)
 		}).
 		Register(reg)
 

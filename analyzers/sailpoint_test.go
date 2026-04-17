@@ -6,8 +6,8 @@ import (
 	"github.com/sailpoint-oss/barrelman/btesting"
 )
 
-func TestSP111ScopeNaming(t *testing.T) {
-	rule := registeredRule("sp-111")
+func TestSailpointOAuthScopeFormat(t *testing.T) {
+	rule := registeredRule("sailpoint-oauth-scope-format")
 
 	btesting.Run(t, rule,
 		btesting.Case{
@@ -63,19 +63,19 @@ components:
           scopes:
             identity.users.read: Read users`,
 			Expect: []btesting.Diag{
-				{Code: "sp-111", Severity: btesting.Error, Message: "declared by security scheme"},
-				{Code: "sp-111", Severity: btesting.Error, Message: "must use lower-case <domain>:<resource>:<action> naming"},
+				{Code: "sailpoint-oauth-scope-format", Severity: btesting.Error, Message: "declared by security scheme"},
+				{Code: "sailpoint-oauth-scope-format", Severity: btesting.Error, Message: "must use lower-case <domain>:<resource>:<action> naming"},
 			},
 		},
 	)
 }
 
-func TestSP403StatusCodes(t *testing.T) {
-	rule := registeredRule("sp-403")
+func TestSailpointOperation403Response(t *testing.T) {
+	rule := registeredRule("sailpoint-operation-403-response")
 
 	btesting.Run(t, rule,
 		btesting.Case{
-			Name: "get with standard auth responses passes",
+			Name: "operation with 403 passes",
 			Spec: `openapi: "3.1.0"
 info:
   title: Test
@@ -113,14 +113,14 @@ paths:
         "404":
           description: Not found`,
 			Expect: []btesting.Diag{
-				{Code: "sp-403", Severity: btesting.Error, Message: "must declare a 403 response"},
+				{Code: "sailpoint-operation-403-response", Severity: btesting.Error, Message: "must declare a 403 response"},
 			},
 		},
 	)
 }
 
-func TestSP404ProblemDetails(t *testing.T) {
-	rule := registeredRule("sp-404")
+func TestSailpointErrorProblemDetailsSharedComponent(t *testing.T) {
+	rule := registeredRule("sailpoint-error-problem-details-shared-component")
 
 	btesting.Run(t, rule,
 		btesting.Case{
@@ -204,15 +204,15 @@ paths:
                 instance: /users
                 correlationId: 123e4567-e89b-12d3-a456-426614174000`,
 			Expect: []btesting.Diag{
-				{Code: "sp-404", Severity: btesting.Error, Message: "shared ProblemDetails schema"},
-				{Code: "sp-404", Severity: btesting.Error, Message: "must reference #/components/schemas/ProblemDetails"},
+				{Code: "sailpoint-error-problem-details-shared-component", Severity: btesting.Error, Message: "shared ProblemDetails schema"},
+				{Code: "sailpoint-error-problem-details-shared-component", Severity: btesting.Error, Message: "must reference #/components/schemas/ProblemDetails"},
 			},
 		},
 	)
 }
 
-func TestSP710RequiredFields(t *testing.T) {
-	rule := registeredRule("sp-710")
+func TestSailpointSchemaRequiredFields(t *testing.T) {
+	rule := registeredRule("sailpoint-schema-required-fields")
 
 	btesting.Run(t, rule,
 		btesting.Case{
@@ -256,7 +256,7 @@ paths:
 			Expect: nil,
 		},
 		btesting.Case{
-			Name: "missing required array and required path flag trigger errors",
+			Name: "missing required arrays in request/response trigger errors",
 			Spec: `openapi: "3.1.0"
 info:
   title: Test
@@ -268,6 +268,7 @@ paths:
       parameters:
         - name: userId
           in: path
+          required: true
           schema:
             type: string
       requestBody:
@@ -290,16 +291,65 @@ paths:
                   id:
                     type: string`,
 			Expect: []btesting.Diag{
-				{Code: "sp-710", Severity: btesting.Error, Message: "must set required: true"},
-				{Code: "sp-710", Severity: btesting.Error, Message: "Request body schema"},
-				{Code: "sp-710", Severity: btesting.Error, Message: "Response schema"},
+				{Code: "sailpoint-schema-required-fields", Severity: btesting.Error, Message: "Request body schema"},
+				{Code: "sailpoint-schema-required-fields", Severity: btesting.Error, Message: "Response schema"},
 			},
 		},
 	)
 }
 
-func TestSP903RequestIDHeader(t *testing.T) {
-	rule := registeredRule("sp-903")
+func TestSailpointPathParamRequired(t *testing.T) {
+	rule := registeredRule("sailpoint-path-param-required")
+
+	btesting.Run(t, rule,
+		btesting.Case{
+			Name: "required path param passes",
+			Spec: `openapi: "3.1.0"
+info:
+  title: Test
+  version: "1.0"
+paths:
+  /users/{userId}:
+    put:
+      operationId: updateUser
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK`,
+			Expect: nil,
+		},
+		btesting.Case{
+			Name: "path parameter missing required flag triggers error",
+			Spec: `openapi: "3.1.0"
+info:
+  title: Test
+  version: "1.0"
+paths:
+  /users/{userId}:
+    put:
+      operationId: updateUser
+      parameters:
+        - name: userId
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK`,
+			Expect: []btesting.Diag{
+				{Code: "sailpoint-path-param-required", Severity: btesting.Error, Message: "must set required: true"},
+			},
+		},
+	)
+}
+
+func TestSailpointXRequestIDSharedComponent(t *testing.T) {
+	rule := registeredRule("sailpoint-x-request-id-shared-component")
 
 	btesting.Run(t, rule,
 		btesting.Case{
@@ -347,14 +397,14 @@ paths:
                 type: string
                 format: uuid`,
 			Expect: []btesting.Diag{
-				{Code: "sp-903", Severity: btesting.Error, Message: "shared X-Request-Id header"},
+				{Code: "sailpoint-x-request-id-shared-component", Severity: btesting.Error, Message: "shared X-Request-Id header"},
 			},
 		},
 	)
 }
 
-func TestSP124ResourceOperationID(t *testing.T) {
-	rule := registeredRule("sp-124")
+func TestSailpointPathParamResourceOperationLink(t *testing.T) {
+	rule := registeredRule("sailpoint-path-param-resource-operation-link")
 
 	btesting.Run(t, rule,
 		btesting.Case{
@@ -403,7 +453,7 @@ paths:
         "200":
           description: OK`,
 			Expect: []btesting.Diag{
-				{Code: "sp-124", Severity: btesting.Error, Message: "must declare x-sailpoint-resource-operation-id"},
+				{Code: "sailpoint-path-param-resource-operation-link", Severity: btesting.Error, Message: "must declare x-sailpoint-resource-operation-id"},
 			},
 		},
 		btesting.Case{
@@ -427,8 +477,8 @@ paths:
         "200":
           description: OK`,
 			Expect: []btesting.Diag{
-				{Code: "sp-124", Severity: btesting.Error, Message: "must use lowerCamelCase"},
-				{Code: "sp-124", Severity: btesting.Error, Message: "must reference an existing operationId"},
+				{Code: "sailpoint-path-param-resource-operation-link", Severity: btesting.Error, Message: "must use lowerCamelCase"},
+				{Code: "sailpoint-path-param-resource-operation-link", Severity: btesting.Error, Message: "must reference an existing operationId"},
 			},
 		},
 	)

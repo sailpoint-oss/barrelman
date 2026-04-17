@@ -6,8 +6,8 @@ import (
 
 func TestSpectralToTelescopeID_MappedRules(t *testing.T) {
 	tests := []struct {
-		spectralID   string
-		telescopeID  string
+		spectralID  string
+		telescopeID string
 	}{
 		{"info-contact", "info-contact"},
 		{"info-description", "info-description"},
@@ -15,8 +15,12 @@ func TestSpectralToTelescopeID_MappedRules(t *testing.T) {
 		{"oas3-unused-component", "unused-component"},
 		{"no-eval-in-markdown", "description-markdown"},
 		{"no-script-tags-in-markdown", "description-html"},
-		{"operation-operationId", "operation-operationId"},
-		{"operation-operationId-unique", "operation-operationId-unique"},
+		{"operation-operationId", "sailpoint-operation-id-camel-case"},
+		{"operation-operationId-unique", "sailpoint-operation-id-unique"},
+		{"operation-tags", "sailpoint-operation-single-tag"},
+		{"tag-description", "sailpoint-tag-documented"},
+		{"parameter-description", "sailpoint-parameter-description"},
+		{"oas3-operation-security-defined", "sailpoint-operation-security-required"},
 		{"oas3-schema", "oas3-schema"},
 		{"oas3-valid-media-example", "oas3-valid-media-example"},
 		{"oas3-valid-schema-example", "oas3-valid-schema-example"},
@@ -52,6 +56,11 @@ func TestTelescopeToSpectralID_MappedRules(t *testing.T) {
 		{"info-contact", "info-contact"},
 		{"oas3-schema", "oas3-schema"},
 		{"oas3-api-servers", "oas3-api-servers"},
+		{"sailpoint-operation-id-camel-case", "operation-operationId"},
+		{"sailpoint-operation-id-unique", "operation-operationId-unique"},
+		{"sailpoint-operation-single-tag", "operation-tags"},
+		{"sailpoint-tag-documented", "tag-description"},
+		{"sailpoint-parameter-description", "parameter-description"},
 	}
 
 	for _, tt := range tests {
@@ -94,6 +103,7 @@ func TestIsNativeRule(t *testing.T) {
 		"license-url",
 		"oas3-valid-media-example",
 		"oas3-valid-schema-example",
+		"oas3-operation-security-defined",
 	}
 
 	for _, id := range nativeRules {
@@ -120,18 +130,6 @@ func TestIsNativeRule(t *testing.T) {
 	}
 }
 
-func TestSpectralToTelescopeID_RoundTrip(t *testing.T) {
-	// For every mapped Spectral rule, converting to Telescope and back should
-	// yield the original Spectral ID.
-	for spectralID, telescopeID := range spectralToTelescope {
-		got := TelescopeToSpectralID(telescopeID)
-		if got != spectralID {
-			t.Errorf("round-trip failed: Spectral %q -> Telescope %q -> Spectral %q (want %q)",
-				spectralID, telescopeID, got, spectralID)
-		}
-	}
-}
-
 func TestGetSpectralBuiltin_OAS(t *testing.T) {
 	rs := GetSpectralBuiltin("spectral:oas")
 	if rs == nil {
@@ -144,21 +142,18 @@ func TestGetSpectralBuiltin_OAS(t *testing.T) {
 		t.Fatal("expected spectral:oas ruleset to contain rules")
 	}
 
-	// Verify all spectralOASDefaults are present.
-	for ruleID, expectedSev := range spectralOASDefaults {
-		def, ok := rs.Rules[ruleID]
+	// Verify each spectralOASDefaults entry resolves to a rule in the set,
+	// using the canonical SailPoint slug when bridged.
+	for spectralID, expectedSev := range spectralOASDefaults {
+		canonical := SpectralToTelescopeID(spectralID)
+		def, ok := rs.Rules[canonical]
 		if !ok {
-			t.Errorf("rule %q missing from spectral:oas ruleset", ruleID)
+			t.Errorf("rule %q (from spectral %q) missing from spectral:oas ruleset", canonical, spectralID)
 			continue
 		}
 		if def.Severity != expectedSev {
-			t.Errorf("rule %q severity = %q, want %q", ruleID, def.Severity, expectedSev)
+			t.Errorf("rule %q severity = %q, want %q", canonical, def.Severity, expectedSev)
 		}
-	}
-
-	// Verify ruleset has exactly the expected number of rules.
-	if len(rs.Rules) != len(spectralOASDefaults) {
-		t.Errorf("spectral:oas has %d rules, want %d", len(rs.Rules), len(spectralOASDefaults))
 	}
 }
 

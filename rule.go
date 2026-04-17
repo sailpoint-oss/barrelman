@@ -23,15 +23,25 @@ const (
 )
 
 // RuleMeta holds descriptive metadata for a rule.
+//
+// Rule IDs are stable kebab-case slugs. SailPoint guideline rules use the
+// `sailpoint-` namespace (for example "sailpoint-operation-id-unique") and
+// carry the guideline number(s) separately in GuidelineID / GuidelineIDs so
+// the human-readable number survives in documentation URLs without leaking
+// into the rule identifier.
 type RuleMeta struct {
-	ID          string
-	Description string
-	Severity    Severity
-	Category    Category
-	Recommended bool
-	Formats     []navigator.Format
-	HowToFix    string
-	DocURL      string
+	ID           string
+	Description  string
+	Severity     Severity
+	Category     Category
+	Recommended  bool
+	Formats      []navigator.Format
+	HowToFix     string
+	DocURL       string
+	GuidelineID  int   // Primary SailPoint guideline number (0 = not linked).
+	GuidelineIDs []int // Additional guideline numbers cited by this rule.
+	VacuumID     string
+	SpectralID   string
 }
 
 // Rule is the self-contained unit of analysis. Every semantic analyzer, syntax

@@ -1,30 +1,14 @@
 package rulesets
 
-// DeprecatedAliases maps legacy rule IDs to their canonical replacements.
-// Used to keep existing ruleset configs working while the default catalogs and
-// reports move to SailPoint guideline IDs.
-var DeprecatedAliases = map[string]string{
-	"operation-operationid":        "operation-operationId",
-	"operationid-unique":           "operation-operationId-unique",
-	"no-trailing-slash":            "path-keys-no-trailing-slash",
-	"template-valid":               "path-declarations-must-exist",
-	"params-match":                 "path-params",
-	"servers-defined":              "oas3-api-servers",
-	"structural-validation":        "oas3-schema",
-	"operation-operationId":        "sp-122",
-	"operation-operationId-unique": "sp-122",
-	"operation-tags":               "sp-123",
-	"parameter-description":        "sp-115",
-	"security-global-or-operation": "sp-300",
-	"server-url-https":             "sp-304",
-	"missing-error-responses":      "sp-403",
-	"missing-pagination":           "sp-602",
-}
+import "github.com/sailpoint-oss/barrelman/rulesets/bridge"
 
-// NormalizeRuleID resolves deprecated aliases and returns the canonical rule ID.
+// NormalizeRuleID resolves any known alias (legacy kebab id, vacuum id,
+// spectral id, SailPoint guideline number, or `sp-NNN`) into the canonical
+// SailPoint slug. Unrecognized IDs are returned unchanged.
+//
+// This function is a thin wrapper around bridge.Canonical and exists for
+// call-site stability; new code should depend on the bridge package
+// directly.
 func NormalizeRuleID(id string) string {
-	if canonical, ok := DeprecatedAliases[id]; ok {
-		return canonical
-	}
-	return id
+	return bridge.Canonical(id)
 }

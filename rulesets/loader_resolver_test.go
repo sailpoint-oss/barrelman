@@ -11,7 +11,7 @@ func TestLoadBytes_ParsesRuleSet(t *testing.T) {
 	rs, err := LoadBytes([]byte(`
 name: custom
 rules:
-  sp-123: error
+  sailpoint-operation-single-tag: error
 `))
 	if err != nil {
 		t.Fatalf("LoadBytes: %v", err)
@@ -19,7 +19,7 @@ rules:
 	if rs.Name != "custom" {
 		t.Fatalf("Name = %q, want custom", rs.Name)
 	}
-	if rs.Rules["sp-123"].Severity != "error" {
+	if rs.Rules["sailpoint-operation-single-tag"].Severity != "error" {
 		t.Fatalf("unexpected rules: %+v", rs.Rules)
 	}
 }
@@ -35,7 +35,7 @@ rules:
 	if _, ok := rs.Rules["operation-tags"]; ok {
 		t.Fatalf("expected legacy rule ID to be normalized, got %+v", rs.Rules)
 	}
-	if rs.Rules["sp-123"].Severity != "error" {
+	if rs.Rules["sailpoint-operation-single-tag"].Severity != "error" {
 		t.Fatalf("unexpected rules: %+v", rs.Rules)
 	}
 }
@@ -47,7 +47,7 @@ func TestResolve_LoadsRelativeExtendsChain(t *testing.T) {
 
 	if err := os.WriteFile(basePath, []byte(`
 rules:
-  sp-123: error
+  sailpoint-operation-single-tag: error
 `), 0o644); err != nil {
 		t.Fatalf("write base ruleset: %v", err)
 	}
@@ -67,7 +67,7 @@ rules:
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
-	if resolved.Rules["sp-123"].Severity != "error" {
+	if resolved.Rules["sailpoint-operation-single-tag"].Severity != "error" {
 		t.Fatalf("expected inherited rule, got %+v", resolved.Rules)
 	}
 	if resolved.Rules["info-description"].Severity != "warn" {
@@ -101,7 +101,7 @@ func TestResolve_LoadsBarrelmanBuiltinRuleset(t *testing.T) {
 	rs, err := LoadBytes([]byte(`
 extends: barrelman:recommended
 rules:
-  sp-123: error
+  sailpoint-operation-single-tag: error
 `))
 	if err != nil {
 		t.Fatalf("LoadBytes: %v", err)
@@ -114,7 +114,7 @@ rules:
 	if len(resolved.Rules) == 0 {
 		t.Fatal("expected resolved builtin rules")
 	}
-	if resolved.Rules["sp-123"].Severity != "error" {
-		t.Fatalf("sp-123 severity = %q, want error", resolved.Rules["sp-123"].Severity)
+	if resolved.Rules["sailpoint-operation-single-tag"].Severity != "error" {
+		t.Fatalf("sailpoint-operation-single-tag severity = %q, want error", resolved.Rules["sailpoint-operation-single-tag"].Severity)
 	}
 }

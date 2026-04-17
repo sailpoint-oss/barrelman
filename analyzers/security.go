@@ -26,15 +26,8 @@ var (
 		DocURL:      barrelman.DocBaseURL + "oauth-flow-urls",
 	}
 
-	securityGlobalOrOperationMeta = barrelman.RuleMeta{
-		ID:          "security-global-or-operation",
-		Description: "Security should be defined globally or on every operation.",
-		Severity:    barrelman.SeverityWarning,
-		Category:    barrelman.CategorySecurity,
-		Recommended: false,
-		HowToFix:    "Add security requirements either globally or to each operation.",
-		DocURL:      barrelman.GuidelineDocURL("300"),
-	}
+	// security-global-or-operation has been replaced by
+	// sailpoint-operation-security-required (analyzers/sailpoint_security.go).
 
 	securitySchemesDefinedMeta = barrelman.RuleMeta{
 		ID:          "security-schemes-defined",
@@ -76,21 +69,6 @@ func registerSecurityAnalyzers(reg *barrelman.Registry) {
 				}
 				if flow.TokenURL != "" && !isHTTPS(flow.TokenURL) {
 					r.At(flow.TokenURLLoc, "OAuth tokenUrl in '%s' should use HTTPS", name)
-				}
-			}
-		},
-	).Register(reg)
-
-	barrelman.Define("security-global-or-operation", securityGlobalOrOperationMeta).Custom(
-		func(idx *navigator.Index, r *barrelman.Reporter) {
-			if len(idx.Document.Security) > 0 {
-				return
-			}
-			for path, item := range idx.Document.Paths {
-				for _, mo := range item.Operations() {
-					if len(mo.Operation.Security) == 0 {
-						r.At(mo.Operation.Loc, "Operation %s %s has no security (and none defined globally)", mo.Method, path)
-					}
 				}
 			}
 		},

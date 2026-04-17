@@ -137,7 +137,7 @@ func TestLoad_FindsWorkspaceConfig(t *testing.T) {
 	if _, ok := cfg.Rules["operation-tags"]; ok {
 		t.Fatalf("expected legacy rule ID to be normalized, got %+v", cfg.Rules)
 	}
-	if cfg.Rules["sp-123"] != "error" {
+	if cfg.Rules["sailpoint-operation-single-tag"] != "error" {
 		t.Fatalf("expected rules override, got %+v", cfg.Rules)
 	}
 }

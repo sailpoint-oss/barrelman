@@ -45,50 +45,6 @@ components:
 	)
 }
 
-func TestSecurityGlobalOrOperation(t *testing.T) {
-	rule := registeredRule("security-global-or-operation")
-
-	btesting.Run(t, rule,
-		btesting.Case{
-			Name: "global security defined passes",
-			Spec: `openapi: "3.0.3"
-info:
-  title: Test
-  version: "1.0"
-security:
-  - BearerAuth: []
-paths:
-  /pets:
-    get:
-      responses:
-        "200":
-          description: ok
-components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer`,
-			Expect: nil,
-		},
-		btesting.Case{
-			Name: "no security anywhere triggers warning",
-			Spec: `openapi: "3.0.3"
-info:
-  title: Test
-  version: "1.0"
-paths:
-  /pets:
-    get:
-      responses:
-        "200":
-          description: ok`,
-			Expect: []btesting.Diag{
-				{Code: "security-global-or-operation", Severity: btesting.Warn},
-			},
-		},
-	)
-}
-
 // TestOAuthFlowURLs is limited because navigator v0.2.0 may not fully parse
 // OAuth flows. When navigator adds full flow parsing, extend with a failing case.
 func TestOAuthFlowURLs(t *testing.T) {

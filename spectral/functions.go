@@ -303,6 +303,14 @@ func funcSchema(node *yaml.Node, field string, opts map[string]interface{}) []Is
 		return nil
 	}
 
+	// Route through the shared validation engine when it can successfully
+	// decode the target YAML node into a concrete instance. Falls back to
+	// the legacy hand-rolled checker for node types the engine can't
+	// represent (for example YAML aliases or non-standard tags) so
+	// existing tests keep passing during rollout.
+	if issues, ok := validateSchemaViaEngine(target, schemaDef); ok {
+		return issues
+	}
 	return validateSchemaBasic(target, schemaDef)
 }
 

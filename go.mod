@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/sailpoint-oss/navigator v0.11.0
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/tree-sitter/go-tree-sitter v0.25.0
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
 	github.com/yuin/goldmark v1.7.16
@@ -17,7 +18,6 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-pointer v0.0.1 // indirect
 	github.com/sailpoint-oss/tree-sitter-openapi v0.1.0 // indirect
-	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
 	golang.org/x/net v0.50.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.34.0 // indirect

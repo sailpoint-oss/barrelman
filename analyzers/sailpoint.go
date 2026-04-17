@@ -6,8 +6,20 @@ import (
 	"strings"
 
 	"github.com/sailpoint-oss/barrelman"
+	"github.com/sailpoint-oss/barrelman/rulesets/bridge"
 	navigator "github.com/sailpoint-oss/navigator"
 )
+
+// SailPoint analyzer registrations are grouped into per-domain files:
+//
+//   sailpoint_naming.go     - property, path segment, parameter, enum, tag, operationId casing
+//   sailpoint_security.go   - OAuth/OAuth scope/HTTPS rules
+//   sailpoint_errors.go     - #403 status codes and #404 Problem Details rules
+//   sailpoint_payload.go    - nullable/required/numeric-format/identifier rules
+//   sailpoint_operations.go - resource-operation-id linkage, pagination, X-Request-Id
+//
+// This file owns the central registration entry point, the metadata helper,
+// and small shared utilities used by those per-domain files.
 
 var (
 	lowerCamelRe = regexp.MustCompile(`^[a-z][A-Za-z0-9]*$`)
@@ -16,865 +28,86 @@ var (
 )
 
 func registerSailPointAnalyzers(reg *barrelman.Registry) {
-	registerSP104PropertyCamelCase(reg)
-	registerSP107PathConventions(reg)
-	registerSP108QueryParamCamelCase(reg)
-	registerSP111ScopeNaming(reg)
-	registerSP112EnumCase(reg)
-	registerSP115Descriptions(reg)
-	registerSP116Examples(reg)
-	registerSP122OperationIDs(reg)
-	registerSP123Tags(reg)
-	registerSP124ResourceOperationID(reg)
-	registerSP204SuccessBodies(reg)
-	registerSP300OAuthSecurity(reg)
-	registerSP301OAuthScopes(reg)
-	registerSP304HTTPS(reg)
-	registerSP403StatusCodes(reg)
-	registerSP404ProblemDetails(reg)
-	registerSP500NoAPIBasePath(reg)
-	registerSP514NonNumericPathIDs(reg)
-	registerSP602Pagination(reg)
-	registerSP710RequiredFields(reg)
-	registerSP701NoNullableBooleans(reg)
-	registerSP702NoNullableArrays(reg)
-	registerSP804NumericTypes(reg)
-	registerSP903RequestIDHeader(reg)
+	// naming
+	registerSailpointPropertyCamelCase(reg)
+	registerSailpointPathKebabCase(reg)
+	registerSailpointPathParamCamelCase(reg)
+	registerSailpointQueryParamCamelCase(reg)
+	registerSailpointEnumScreamingSnakeCase(reg)
+	registerSailpointOperationIDCamelCase(reg)
+	registerSailpointOperationIDUnique(reg)
+	registerSailpointOperationSingleTag(reg)
+	registerSailpointTagDocumented(reg)
+	registerSailpointParameterDescription(reg)
+	registerSailpointPropertyDescription(reg)
+	registerSailpointParameterExample(reg)
+	registerSailpointPropertyExample(reg)
+	registerSailpointResponseExample(reg)
+
+	// security
+	registerSailpointOAuthScopeFormat(reg)
+	registerSailpointSecurityOAuth2Required(reg)
+	registerSailpointOperationSecurityRequired(reg)
+	registerSailpointOAuthScopesDeclared(reg)
+	registerSailpointServerURLHTTPS(reg)
+
+	// errors (#403 + #404)
+	registerSailpointOperationMethodStatusCodes(reg)
+	registerSailpointOperation4xxResponse(reg)
+	registerSailpointOperation401Response(reg)
+	registerSailpointOperation403Response(reg)
+	registerSailpointErrorProblemDetailsMediaType(reg)
+	registerSailpointErrorProblemDetailsSchema(reg)
+	registerSailpointErrorProblemDetailsSharedComponent(reg)
+	registerSailpointErrorCorrelationID(reg)
+
+	// payload
+	registerSailpointResponseTopLevelObject(reg)
+	registerSailpointPathNoAPIPrefix(reg)
+	registerSailpointPathParamNoNumericID(reg)
+	registerSailpointBooleanNotNullable(reg)
+	registerSailpointArrayNotNullable(reg)
+	registerSailpointSchemaRequiredFields(reg)
+	registerSailpointPathParamRequired(reg)
+	registerSailpointNumericFormatApproved(reg)
+	registerSailpointIdentifierStringType(reg)
+
+	// operations
+	registerSailpointPathParamResourceOperationLink(reg)
+	registerSailpointCollectionOffsetPagination(reg)
+	registerSailpointCollectionWrappedResponse(reg)
+	registerSailpointXRequestIDHeader(reg)
+	registerSailpointXRequestIDSharedComponent(reg)
+	registerSailpointXRequestIDUUID(reg)
 }
 
-func sailpointMeta(id int, description string, severity barrelman.Severity, category barrelman.Category, howToFix string) barrelman.RuleMeta {
-	code := barrelman.NormalizeGuidelineCode(fmt.Sprintf("%d", id))
-	return barrelman.RuleMeta{
-		ID:          code,
-		Description: description,
-		Severity:    severity,
-		Category:    category,
-		Recommended: true,
-		HowToFix:    howToFix,
-		DocURL:      barrelman.GuidelineDocURL(code),
+// sailpointMeta builds a RuleMeta for a canonical SailPoint rule. The
+// guideline number drives the doc URL; the rule slug is independent.
+func sailpointMeta(slug string, severity barrelman.Severity, category barrelman.Category, description, howToFix string) barrelman.RuleMeta {
+	entry, ok := bridge.FromCanonical(slug)
+	if !ok {
+		panic(fmt.Sprintf("sailpointMeta: canonical slug %q is not registered in the rule bridge", slug))
 	}
+	primary := entry.PrimaryGuideline()
+	meta := barrelman.RuleMeta{
+		ID:           slug,
+		Description:  description,
+		Severity:     severity,
+		Category:     category,
+		Recommended:  true,
+		HowToFix:     howToFix,
+		GuidelineID:  primary,
+		GuidelineIDs: append([]int(nil), entry.GuidelineIDs...),
+		VacuumID:     entry.Vacuum,
+		SpectralID:   entry.Spectral,
+	}
+	if primary > 0 {
+		meta.DocURL = barrelman.GuidelineDocURL(fmt.Sprintf("%d", primary))
+	}
+	return meta
 }
 
-func registerSP104PropertyCamelCase(reg *barrelman.Registry) {
-	meta := sailpointMeta(104,
-		"JSON object property names must use lowerCamelCase.",
-		barrelman.SeverityError,
-		barrelman.CategoryNaming,
-		"Rename schema properties to lowerCamelCase.",
-	)
-
-	barrelman.Define(meta.ID, meta).Custom(func(idx *navigator.Index, r *barrelman.Reporter) {
-		walkAllSchemas(idx, func(name string, schema *navigator.Schema, pointer string) {
-			for propName, prop := range schema.Properties {
-				if isExtensionName(propName) || isLowerCamelCase(propName) {
-					continue
-				}
-				loc := propertyLoc(prop, schema)
-				if name := SchemaNameFromPointer(pointer); name != "" {
-					r.At(loc, "[#104] Property '%s' in Schema Object '%s' must use lowerCamelCase", propName, name)
-				} else {
-					r.At(loc, "[#104] Property '%s' at %s must use lowerCamelCase", propName, pointerForProperty(pointer, propName))
-				}
-			}
-		})
-	}).Register(reg)
-}
-
-func registerSP107PathConventions(reg *barrelman.Registry) {
-	meta := sailpointMeta(107,
-		"Paths must use lowercase hyphenated segments and lowerCamelCase path parameters.",
-		barrelman.SeverityError,
-		barrelman.CategoryPaths,
-		"Use lowercase hyphenated resource segments and lowerCamelCase path parameter names.",
-	)
-
-	barrelman.Define(meta.ID, meta).Paths(func(path string, item *navigator.PathItem, r *barrelman.Reporter) {
-		for _, seg := range barrelman.NonParamSegments(path) {
-			if barrelman.IsKebabCase(seg) {
-				continue
-			}
-			r.At(item.PathLoc, "[#107] Path segment '%s' in %s must use lowercase hyphenated form", seg, path)
-		}
-		for _, param := range barrelman.ExtractPathParams(path) {
-			if isLowerCamelCase(param) {
-				continue
-			}
-			r.At(item.PathLoc, "[#107] Path parameter '{%s}' in %s must use lowerCamelCase", param, path)
-		}
-	}).Register(reg)
-}
-
-func registerSP108QueryParamCamelCase(reg *barrelman.Registry) {
-	meta := sailpointMeta(108,
-		"Query parameter names must use lowerCamelCase.",
-		barrelman.SeverityError,
-		barrelman.CategoryPaths,
-		"Rename query parameters to lowerCamelCase.",
-	)
-
-	barrelman.Define(meta.ID, meta).Custom(func(idx *navigator.Index, r *barrelman.Reporter) {
-		for path, item := range idx.Document.Paths {
-			for _, mo := range item.Operations() {
-				for _, param := range operationParameters(item, mo.Operation) {
-					if param == nil || param.Ref != "" || param.In != "query" || isLowerCamelCase(param.Name) {
-						continue
-					}
-					r.At(param.NameLoc, "[#108] Query parameter '%s' in %s %s must use lowerCamelCase", param.Name, strings.ToUpper(mo.Method), path)
-				}
-			}
-		}
-	}).Register(reg)
-}
-
-func registerSP111ScopeNaming(reg *barrelman.Registry) {
-	meta := sailpointMeta(111,
-		"OAuth scopes must use lower-case <domain>:<resource>:<action> names.",
-		barrelman.SeverityError,
-		barrelman.CategorySecurity,
-		"Rename scopes to lower-case colon-separated domain, resource, and action segments.",
-	)
-
-	barrelman.Define(meta.ID, meta).Custom(func(idx *navigator.Index, r *barrelman.Reporter) {
-		for name, ss := range idx.SecuritySchemes {
-			for _, scope := range declaredOAuthScopes(ss) {
-				if isValidScopeName(scope) {
-					continue
-				}
-				r.At(navigator.LocOrFallback(ss.NameLoc, ss.Loc), "[#111] OAuth scope '%s' declared by security scheme '%s' must use lower-case <domain>:<resource>:<action> naming", scope, name)
-			}
-		}
-		for path, item := range idx.Document.Paths {
-			for _, mo := range item.Operations() {
-				for _, req := range effectiveSecurity(idx.Document, mo.Operation) {
-					for _, entry := range req.Entries {
-						if ss, ok := idx.SecuritySchemes[entry.Name]; ok && ss != nil && ss.Type != "oauth2" {
-							continue
-						}
-						for i, scope := range entry.Scopes {
-							if isValidScopeName(scope) {
-								continue
-							}
-							loc := entry.NameLoc
-							if i < len(entry.ScopeLocs) {
-								loc = navigator.LocOrFallback(entry.ScopeLocs[i], entry.NameLoc)
-							}
-							r.At(loc, "[#111] OAuth scope '%s' on %s %s must use lower-case <domain>:<resource>:<action> naming", scope, strings.ToUpper(mo.Method), path)
-						}
-					}
-				}
-			}
-		}
-	}).Register(reg)
-}
-
-func registerSP112EnumCase(reg *barrelman.Registry) {
-	meta := sailpointMeta(112,
-		"String enum values must use UPPER_SNAKE_CASE.",
-		barrelman.SeverityError,
-		barrelman.CategoryTypes,
-		"Rename string enum values to UPPER_SNAKE_CASE.",
-	)
-
-	barrelman.Define(meta.ID, meta).RecursiveSchemas(func(name string, schema *navigator.Schema, pointer string, r *barrelman.Reporter) {
-		if schema.Type != "string" {
-			return
-		}
-		for _, value := range schema.Enum {
-			if upperSnakeRe.MatchString(value) {
-				continue
-			}
-			if name := SchemaNameFromPointer(pointer); name != "" {
-				r.At(schema.Loc, "[#112] Enum value '%s' in Schema Object '%s' must use UPPER_SNAKE_CASE", value, name)
-			} else {
-				r.At(schema.Loc, "[#112] Enum value '%s' at %s must use UPPER_SNAKE_CASE", value, pointer)
-			}
-			return
-		}
-	}).Register(reg)
-}
-
-func registerSP115Descriptions(reg *barrelman.Registry) {
-	meta := sailpointMeta(115,
-		"Parameters and schema properties must include descriptions.",
-		barrelman.SeverityError,
-		barrelman.CategoryDocumentation,
-		"Add clear descriptions to every parameter and schema property.",
-	)
-
-	barrelman.Define(meta.ID, meta).Custom(func(idx *navigator.Index, r *barrelman.Reporter) {
-		for path, item := range idx.Document.Paths {
-			for _, mo := range item.Operations() {
-				for _, param := range operationParameters(item, mo.Operation) {
-					if param == nil || param.Ref != "" || strings.TrimSpace(param.Description.Text) != "" {
-						continue
-					}
-					r.At(param.Loc, "[#115] Parameter '%s' in %s %s must include a description", param.Name, strings.ToUpper(mo.Method), path)
-				}
-			}
-		}
-		walkAllSchemas(idx, func(name string, schema *navigator.Schema, pointer string) {
-			for propName, prop := range schema.Properties {
-				if prop == nil || prop.Ref != "" || strings.TrimSpace(prop.Description.Text) != "" {
-					continue
-				}
-				loc := propertyLoc(prop, schema)
-				if name := SchemaNameFromPointer(pointer); name != "" {
-					r.At(loc, "[#115] Property '%s' in Schema Object '%s' must include a description", propName, name)
-				} else {
-					r.At(loc, "[#115] Property '%s' at %s must include a description", propName, pointerForProperty(pointer, propName))
-				}
-			}
-		})
-	}).Register(reg)
-}
-
-func registerSP116Examples(reg *barrelman.Registry) {
-	meta := sailpointMeta(116,
-		"Parameters, schema properties, and response payloads must include examples.",
-		barrelman.SeverityError,
-		barrelman.CategoryDocumentation,
-		"Add representative examples to parameters, schema properties, and payload media types.",
-	)
-
-	barrelman.Define(meta.ID, meta).Custom(func(idx *navigator.Index, r *barrelman.Reporter) {
-		for path, item := range idx.Document.Paths {
-			for _, mo := range item.Operations() {
-				for _, param := range operationParameters(item, mo.Operation) {
-					if param == nil || param.Ref != "" || hasParameterExample(param) {
-						continue
-					}
-					r.At(param.Loc, "[#116] Parameter '%s' in %s %s must include an example", param.Name, strings.ToUpper(mo.Method), path)
-				}
-				for code, resp := range mo.Operation.Responses {
-					if !isErrorOrSuccessCode(code) {
-						continue
-					}
-					for mediaType, media := range resp.Content {
-						if media == nil || hasMediaExample(media) || (media.Schema != nil && media.Schema.Example != nil) {
-							continue
-						}
-						r.At(resp.Loc, "[#116] Response %s for %s %s must include an example for %s", code, strings.ToUpper(mo.Method), path, mediaType)
-					}
-				}
-			}
-		}
-		walkAllSchemas(idx, func(name string, schema *navigator.Schema, pointer string) {
-			for propName, prop := range schema.Properties {
-				if prop == nil || prop.Ref != "" || prop.Example != nil {
-					continue
-				}
-				loc := propertyLoc(prop, schema)
-				if name := SchemaNameFromPointer(pointer); name != "" {
-					r.At(loc, "[#116] Property '%s' in Schema Object '%s' must include an example", propName, name)
-				} else {
-					r.At(loc, "[#116] Property '%s' at %s must include an example", propName, pointerForProperty(pointer, propName))
-				}
-			}
-		})
-	}).Register(reg)
-}
-
-func registerSP122OperationIDs(reg *barrelman.Registry) {
-	meta := sailpointMeta(122,
-		"Operations must declare unique lowerCamelCase operationIds.",
-		barrelman.SeverityError,
-		barrelman.CategoryNaming,
-		"Add a unique lowerCamelCase operationId to every operation.",
-	)
-
-	barrelman.Define(meta.ID, meta).Custom(func(idx *navigator.Index, r *barrelman.Reporter) {
-		type operationIDLocation struct {
-			loc  navigator.Loc
-			desc string
-		}
-		seen := make(map[string]operationIDLocation)
-		for path, item := range idx.Document.Paths {
-			for _, mo := range item.Operations() {
-				op := mo.Operation
-				method := strings.ToUpper(mo.Method)
-				if strings.TrimSpace(op.OperationID) == "" {
-					r.At(op.Loc, "[#122] Operation %s %s must declare an operationId", method, path)
-					continue
-				}
-				if !isLowerCamelCase(op.OperationID) {
-					r.At(op.OperationIDLoc, "[#122] operationId '%s' for %s %s must use lowerCamelCase", op.OperationID, method, path)
-				}
-				location := method + " " + path
-				if first, ok := seen[op.OperationID]; ok {
-					r.WithRelated(first.loc, "", "[#122] First defined here at %s", first.desc).
-						At(op.OperationIDLoc, "[#122] operationId '%s' is already used at %s", op.OperationID, first.desc)
-					continue
-				}
-				seen[op.OperationID] = operationIDLocation{
-					loc:  op.OperationIDLoc,
-					desc: location,
-				}
-			}
-		}
-	}).Register(reg)
-}
-
-func registerSP123Tags(reg *barrelman.Registry) {
-	meta := sailpointMeta(123,
-		"Each operation must declare exactly one documented tag.",
-		barrelman.SeverityError,
-		barrelman.CategoryDocumentation,
-		"Declare exactly one root tag per operation and give each root tag a description.",
-	)
-
-	barrelman.Define(meta.ID, meta).Custom(func(idx *navigator.Index, r *barrelman.Reporter) {
-		rootTags := make(map[string]navigator.Tag, len(idx.Document.Tags))
-		for _, tag := range idx.Document.Tags {
-			rootTags[tag.Name] = tag
-			if strings.TrimSpace(tag.Description.Text) == "" {
-				r.At(tag.Loc, "[#123] Root tag '%s' must include a description", tag.Name)
-			}
-		}
-		for path, item := range idx.Document.Paths {
-			for _, mo := range item.Operations() {
-				op := mo.Operation
-				method := strings.ToUpper(mo.Method)
-				if len(op.Tags) != 1 {
-					r.At(navigator.LocOrFallback(op.TagsLoc, op.Loc), "[#123] Operation %s %s must declare exactly one tag", method, path)
-					continue
-				}
-				tagName := op.Tags[0].Name
-				rootTag, ok := rootTags[tagName]
-				if !ok {
-					r.At(op.Tags[0].Loc, "[#123] Operation tag '%s' on %s %s must be declared in the root tags section", tagName, method, path)
-					continue
-				}
-				if strings.TrimSpace(rootTag.Description.Text) == "" {
-					r.At(rootTag.Loc, "[#123] Root tag '%s' must include a description", tagName)
-				}
-			}
-		}
-	}).Register(reg)
-}
-
-func registerSP124ResourceOperationID(reg *barrelman.Registry) {
-	meta := sailpointMeta(124,
-		"Path parameters must declare x-sailpoint-resource-operation-id values that reference existing operationIds.",
-		barrelman.SeverityError,
-		barrelman.CategoryDocumentation,
-		"Add x-sailpoint-resource-operation-id to every path parameter using a valid lowerCamelCase operationId.",
-	)
-
-	barrelman.Define(meta.ID, meta).Custom(func(idx *navigator.Index, r *barrelman.Reporter) {
-		operationIDs := make(map[string]bool)
-		for _, item := range idx.Document.Paths {
-			for _, mo := range item.Operations() {
-				if strings.TrimSpace(mo.Operation.OperationID) != "" {
-					operationIDs[mo.Operation.OperationID] = true
-				}
-			}
-		}
-
-		seen := make(map[string]bool)
-		for path, item := range idx.Document.Paths {
-			for _, mo := range item.Operations() {
-				for _, param := range operationParameters(item, mo.Operation) {
-					resolved := resolveParameter(idx, param)
-					if resolved == nil || resolved.In != "path" {
-						continue
-					}
-					key := pathParameterRuleKey(param, resolved, path)
-					if seen[key] {
-						continue
-					}
-					seen[key] = true
-
-					ext := resolved.Extensions["x-sailpoint-resource-operation-id"]
-					if ext == nil || strings.TrimSpace(ext.Value) == "" {
-						r.At(navigator.LocOrFallback(resolved.NameLoc, resolved.Loc), "[#124] Path parameter '%s' in %s must declare x-sailpoint-resource-operation-id", resolved.Name, path)
-						continue
-					}
-					value := strings.TrimSpace(ext.Value)
-					if !isLowerCamelCase(value) {
-						r.At(ext.Loc, "[#124] x-sailpoint-resource-operation-id '%s' for path parameter '%s' in %s must use lowerCamelCase", value, resolved.Name, path)
-					}
-					if !operationIDs[value] {
-						r.At(ext.Loc, "[#124] x-sailpoint-resource-operation-id '%s' for path parameter '%s' in %s must reference an existing operationId", value, resolved.Name, path)
-					}
-				}
-			}
-		}
-	}).Register(reg)
-}
-
-func registerSP204SuccessBodies(reg *barrelman.Registry) {
-	meta := sailpointMeta(204,
-		"Successful JSON responses must return top-level objects, not arrays.",
-		barrelman.SeverityError,
-		barrelman.CategoryStructure,
-		"Wrap collections in an object envelope instead of returning a top-level array.",
-	)
-
-	barrelman.Define(meta.ID, meta).Custom(func(idx *navigator.Index, r *barrelman.Reporter) {
-		for path, item := range idx.Document.Paths {
-			for _, mo := range item.Operations() {
-				for code, resp := range mo.Operation.Responses {
-					if !strings.HasPrefix(code, "2") {
-						continue
-					}
-					for mediaType, media := range resp.Content {
-						if media == nil || !strings.Contains(strings.ToLower(mediaType), "json") {
-							continue
-						}
-						schema := resolveSchema(idx, media.Schema)
-						if schema == nil || schema.Type != "array" {
-							continue
-						}
-						r.At(resp.Loc, "[#204] Response %s for %s %s must return a top-level object instead of an array", code, strings.ToUpper(mo.Method), path)
-					}
-				}
-			}
-		}
-	}).Register(reg)
-}
-
-func registerSP300OAuthSecurity(reg *barrelman.Registry) {
-	meta := sailpointMeta(300,
-		"Security must use OAuth 2.0 and every operation must declare security requirements.",
-		barrelman.SeverityError,
-		barrelman.CategorySecurity,
-		"Define OAuth 2.0 security schemes and apply security requirements to every operation.",
-	)
-
-	barrelman.Define(meta.ID, meta).Custom(func(idx *navigator.Index, r *barrelman.Reporter) {
-		if len(idx.SecuritySchemes) == 0 {
-			r.AtRange(barrelman.FileStartRange, "[#300] The API must define at least one OAuth 2.0 security scheme")
-		}
-		for name, ss := range idx.SecuritySchemes {
-			if ss == nil || ss.Ref != "" {
-				continue
-			}
-			if ss.Type != "oauth2" {
-				r.At(ss.Loc, "[#300] Security scheme '%s' must use type oauth2", name)
-			}
-		}
-		for path, item := range idx.Document.Paths {
-			for _, mo := range item.Operations() {
-				reqs := effectiveSecurity(idx.Document, mo.Operation)
-				if len(reqs) == 0 {
-					r.At(mo.Operation.Loc, "[#300] Operation %s %s must declare security requirements", strings.ToUpper(mo.Method), path)
-				}
-			}
-		}
-	}).Register(reg)
-}
-
-func registerSP301OAuthScopes(reg *barrelman.Registry) {
-	meta := sailpointMeta(301,
-		"OAuth 2.0 security requirements must declare valid scopes.",
-		barrelman.SeverityError,
-		barrelman.CategorySecurity,
-		"List one or more valid OAuth scopes on each security requirement entry.",
-	)
-
-	barrelman.Define(meta.ID, meta).Custom(func(idx *navigator.Index, r *barrelman.Reporter) {
-		for path, item := range idx.Document.Paths {
-			for _, mo := range item.Operations() {
-				for _, req := range effectiveSecurity(idx.Document, mo.Operation) {
-					for _, entry := range req.Entries {
-						ss, ok := idx.SecuritySchemes[entry.Name]
-						if !ok || ss == nil || ss.Type != "oauth2" {
-							continue
-						}
-						if len(entry.Scopes) == 0 {
-							r.At(entry.NameLoc, "[#301] OAuth requirement '%s' on %s %s must declare at least one scope", entry.Name, strings.ToUpper(mo.Method), path)
-							continue
-						}
-						allowed := oauthScopes(ss)
-						for _, scope := range entry.Scopes {
-							if allowed[scope] {
-								continue
-							}
-							r.At(entry.NameLoc, "[#301] OAuth scope '%s' on %s %s is not defined by security scheme '%s'", scope, strings.ToUpper(mo.Method), path, entry.Name)
-						}
-					}
-				}
-			}
-		}
-	}).Register(reg)
-}
-
-func registerSP304HTTPS(reg *barrelman.Registry) {
-	meta := sailpointMeta(304,
-		"Server URLs must use HTTPS.",
-		barrelman.SeverityError,
-		barrelman.CategoryServers,
-		"Use https:// for every published server URL.",
-	)
-
-	barrelman.Define(meta.ID, meta).Servers(func(server *navigator.Server, r *barrelman.Reporter) {
-		if server.URL != "" && !barrelman.IsHTTPS(server.URL) {
-			r.At(server.URLLoc, "[#304] Server URL '%s' must use HTTPS", server.URL)
-		}
-	}).Register(reg)
-}
-
-func registerSP403StatusCodes(reg *barrelman.Registry) {
-	meta := sailpointMeta(403,
-		"Operations must declare standard status codes and at least one 4xx response.",
-		barrelman.SeverityError,
-		barrelman.CategoryStructure,
-		"Use IANA standard response codes and declare at least one client error response per operation.",
-	)
-
-	barrelman.Define(meta.ID, meta).Operations(func(path, method string, op *navigator.Operation, r *barrelman.Reporter) {
-		has4xx := false
-		has200 := false
-		has201 := false
-		has204 := false
-		has401 := false
-		has403 := false
-		for code := range op.Responses {
-			if code == "default" {
-				continue
-			}
-			if !knownStatusCodes[code] {
-				r.At(navigator.LocOrFallback(op.ResponsesLoc, op.Loc), "[#403] Response code '%s' for %s %s is not a standard HTTP status code", code, strings.ToUpper(method), path)
-			}
-			if strings.HasPrefix(code, "4") {
-				has4xx = true
-			}
-			switch code {
-			case "200":
-				has200 = true
-			case "201":
-				has201 = true
-			case "204":
-				has204 = true
-			case "401":
-				has401 = true
-			case "403":
-				has403 = true
-			}
-		}
-		responsesLoc := navigator.LocOrFallback(op.ResponsesLoc, op.Loc)
-		switch strings.ToUpper(method) {
-		case "GET":
-			if !has200 {
-				r.At(responsesLoc, "[#403] GET %s must declare a 200 response", path)
-			}
-		case "DELETE":
-			if !has200 && !has204 {
-				r.At(responsesLoc, "[#403] DELETE %s must declare a 200 or 204 response", path)
-			}
-		case "POST":
-			if isLikelyCollectionCreate(path) && !has201 {
-				r.At(responsesLoc, "[#403] POST %s should declare a 201 response for resource creation", path)
-			}
-		}
-		if !has4xx {
-			r.At(responsesLoc, "[#403] Operation %s %s must declare at least one 4xx response", strings.ToUpper(method), path)
-		}
-		if !has401 {
-			r.At(responsesLoc, "[#403] Operation %s %s must declare a 401 response", strings.ToUpper(method), path)
-		}
-		if !has403 {
-			r.At(responsesLoc, "[#403] Operation %s %s must declare a 403 response", strings.ToUpper(method), path)
-		}
-	}).Register(reg)
-}
-
-func registerSP404ProblemDetails(reg *barrelman.Registry) {
-	meta := sailpointMeta(404,
-		"Error responses must use application/problem+json with Problem Details fields.",
-		barrelman.SeverityError,
-		barrelman.CategoryStructure,
-		"Return RFC 7807 Problem Details payloads for 4xx and 5xx responses.",
-	)
-
-	barrelman.Define(meta.ID, meta).Custom(func(idx *navigator.Index, r *barrelman.Reporter) {
-		if !hasProblemDetailsComponent(idx.Document) {
-			r.AtRange(barrelman.FileStartRange, "[#404] Components must define a shared ProblemDetails schema")
-		}
-		requiredProps := []string{"type", "title", "status", "detail", "instance"}
-		for path, item := range idx.Document.Paths {
-			for _, mo := range item.Operations() {
-				for code, resp := range mo.Operation.Responses {
-					if !strings.HasPrefix(code, "4") && !strings.HasPrefix(code, "5") {
-						continue
-					}
-					media := resp.Content["application/problem+json"]
-					if media == nil {
-						r.At(resp.Loc, "[#404] Response %s for %s %s must use application/problem+json", code, strings.ToUpper(mo.Method), path)
-						continue
-					}
-					if !hasMediaExample(media) {
-						r.At(resp.Loc, "[#404] Problem Details response %s for %s %s must include an example", code, strings.ToUpper(mo.Method), path)
-					}
-					if media.Schema == nil || media.Schema.Ref != "#/components/schemas/ProblemDetails" {
-						r.At(resp.Loc, "[#404] Problem Details response %s for %s %s must reference #/components/schemas/ProblemDetails", code, strings.ToUpper(mo.Method), path)
-					}
-					schema := resolveSchema(idx, media.Schema)
-					if schema == nil {
-						r.At(resp.Loc, "[#404] Problem Details response %s for %s %s must declare a schema", code, strings.ToUpper(mo.Method), path)
-						continue
-					}
-					if schema.Type != "object" {
-						r.At(resp.Loc, "[#404] Problem Details response %s for %s %s must use an object schema", code, strings.ToUpper(mo.Method), path)
-						continue
-					}
-					for _, prop := range requiredProps {
-						if _, ok := schema.Properties[prop]; !ok {
-							r.At(resp.Loc, "[#404] Problem Details response %s for %s %s must define property '%s'", code, strings.ToUpper(mo.Method), path, prop)
-						}
-					}
-					if _, ok := schema.Properties["correlationId"]; !ok {
-						r.At(resp.Loc, "[#404] Problem Details response %s for %s %s must define property 'correlationId'", code, strings.ToUpper(mo.Method), path)
-					}
-				}
-			}
-		}
-	}).Register(reg)
-}
-
-func registerSP500NoAPIBasePath(reg *barrelman.Registry) {
-	meta := sailpointMeta(500,
-		"Paths must not include an /api base prefix.",
-		barrelman.SeverityError,
-		barrelman.CategoryPaths,
-		"Publish resource paths directly instead of nesting them under /api.",
-	)
-
-	barrelman.Define(meta.ID, meta).Paths(func(path string, item *navigator.PathItem, r *barrelman.Reporter) {
-		if path == "/api" || strings.HasPrefix(path, "/api/") {
-			r.At(item.PathLoc, "[#500] Path '%s' must not include an /api base prefix", path)
-		}
-	}).Register(reg)
-}
-
-func registerSP514NonNumericPathIDs(reg *barrelman.Registry) {
-	meta := sailpointMeta(514,
-		"Path parameters must not use numeric identifier schemas.",
-		barrelman.SeverityError,
-		barrelman.CategoryPaths,
-		"Model path identifiers as strings rather than integers or numbers.",
-	)
-
-	barrelman.Define(meta.ID, meta).Custom(func(idx *navigator.Index, r *barrelman.Reporter) {
-		for path, item := range idx.Document.Paths {
-			for _, mo := range item.Operations() {
-				for _, param := range operationParameters(item, mo.Operation) {
-					if param == nil || param.Ref != "" || param.In != "path" || param.Schema == nil {
-						continue
-					}
-					schema := resolveSchema(idx, param.Schema)
-					if schema == nil {
-						continue
-					}
-					if schema.Type == "integer" || schema.Type == "number" {
-						r.At(param.NameLoc, "[#514] Path parameter '%s' in %s %s must use a string identifier schema", param.Name, strings.ToUpper(mo.Method), path)
-					}
-				}
-			}
-		}
-	}).Register(reg)
-}
-
-func registerSP602Pagination(reg *barrelman.Registry) {
-	meta := sailpointMeta(602,
-		"Collection GET operations must use limit/offset pagination and a wrapped response object.",
-		barrelman.SeverityError,
-		barrelman.CategoryStructure,
-		"Add limit and offset query parameters and wrap collection responses in an object with items metadata.",
-	)
-
-	barrelman.Define(meta.ID, meta).Custom(func(idx *navigator.Index, r *barrelman.Reporter) {
-		for path, item := range idx.Document.Paths {
-			for _, mo := range item.Operations() {
-				if strings.ToUpper(mo.Method) != "GET" {
-					continue
-				}
-				respSchema := firstSuccessSchema(idx, mo.Operation)
-				if respSchema == nil {
-					continue
-				}
-				isCollection := respSchema.Type == "array" || (respSchema.Type == "object" && respSchema.Properties["items"] != nil)
-				if !isCollection {
-					continue
-				}
-				params := operationParameters(item, mo.Operation)
-				if !hasParam(params, "query", "limit") || !hasParam(params, "query", "offset") {
-					r.At(navigator.LocOrFallback(mo.Operation.ParametersLoc, mo.Operation.Loc), "[#602] Collection operation %s %s must declare query parameters 'limit' and 'offset'", strings.ToUpper(mo.Method), path)
-				}
-				if respSchema.Type == "array" {
-					r.At(navigator.LocOrFallback(mo.Operation.ResponsesLoc, mo.Operation.Loc), "[#602] Collection operation %s %s must wrap items in a top-level object response", strings.ToUpper(mo.Method), path)
-					continue
-				}
-				for _, prop := range []string{"items", "limit", "offset", "count"} {
-					if _, ok := respSchema.Properties[prop]; !ok {
-						r.At(navigator.LocOrFallback(mo.Operation.ResponsesLoc, mo.Operation.Loc), "[#602] Collection operation %s %s response schema must define property '%s'", strings.ToUpper(mo.Method), path, prop)
-					}
-				}
-			}
-		}
-	}).Register(reg)
-}
-
-func registerSP710RequiredFields(reg *barrelman.Registry) {
-	meta := sailpointMeta(710,
-		"Request and response schemas must declare required fields, and path parameters must be required.",
-		barrelman.SeverityError,
-		barrelman.CategoryTypes,
-		"Declare required arrays on object schemas and mark every path parameter as required.",
-	)
-
-	barrelman.Define(meta.ID, meta).Custom(func(idx *navigator.Index, r *barrelman.Reporter) {
-		for path, item := range idx.Document.Paths {
-			for _, mo := range item.Operations() {
-				for _, param := range operationParameters(item, mo.Operation) {
-					if param == nil || param.Ref != "" || param.In != "path" {
-						continue
-					}
-					if !param.Required {
-						r.At(param.NameLoc, "[#710] Path parameter '%s' in %s %s must set required: true", param.Name, strings.ToUpper(mo.Method), path)
-					}
-				}
-				if mo.Operation.RequestBody != nil {
-					for mediaType, media := range mo.Operation.RequestBody.Content {
-						schema := resolveSchema(idx, media.Schema)
-						if !schemaNeedsRequiredArray(schema) {
-							continue
-						}
-						r.At(mo.Operation.RequestBody.Loc, "[#710] Request body schema for %s %s (%s) must declare a required array", strings.ToUpper(mo.Method), path, mediaType)
-					}
-				}
-				for code, resp := range mo.Operation.Responses {
-					for mediaType, media := range resp.Content {
-						schema := resolveSchema(idx, media.Schema)
-						if !schemaNeedsRequiredArray(schema) {
-							continue
-						}
-						r.At(resp.Loc, "[#710] Response schema for %s %s response %s (%s) must declare a required array", strings.ToUpper(mo.Method), path, code, mediaType)
-					}
-				}
-			}
-		}
-	}).Register(reg)
-}
-
-func registerSP701NoNullableBooleans(reg *barrelman.Registry) {
-	meta := sailpointMeta(701,
-		"Boolean schemas must not be nullable.",
-		barrelman.SeverityError,
-		barrelman.CategoryTypes,
-		"Represent booleans as true/false only; remove nullable from boolean schemas.",
-	)
-
-	barrelman.Define(meta.ID, meta).RecursiveSchemas(func(name string, schema *navigator.Schema, pointer string, r *barrelman.Reporter) {
-		if schema.Type == "boolean" && schema.Nullable {
-			if name := SchemaNameFromPointer(pointer); name != "" {
-				r.At(schema.Loc, "[#701] Boolean property in Schema Object '%s' must not be nullable", name)
-			} else {
-				r.At(schema.Loc, "[#701] Boolean schema at %s must not be nullable", pointer)
-			}
-		}
-	}).Register(reg)
-}
-
-func registerSP702NoNullableArrays(reg *barrelman.Registry) {
-	meta := sailpointMeta(702,
-		"Array schemas must not be nullable.",
-		barrelman.SeverityError,
-		barrelman.CategoryTypes,
-		"Use empty arrays instead of nullable arrays.",
-	)
-
-	barrelman.Define(meta.ID, meta).RecursiveSchemas(func(name string, schema *navigator.Schema, pointer string, r *barrelman.Reporter) {
-		if schema.Type == "array" && schema.Nullable {
-			if name := SchemaNameFromPointer(pointer); name != "" {
-				r.At(schema.Loc, "[#702] Array property in Schema Object '%s' must not be nullable", name)
-			} else {
-				r.At(schema.Loc, "[#702] Array schema at %s must not be nullable", pointer)
-			}
-		}
-	}).Register(reg)
-}
-
-func registerSP804NumericTypes(reg *barrelman.Registry) {
-	meta := sailpointMeta(804,
-		"Numeric schemas must use approved numeric formats, and identifier fields must use strings.",
-		barrelman.SeverityError,
-		barrelman.CategoryTypes,
-		"Use int32/int64 for integers, float/double for numbers, and string types for identifiers.",
-	)
-
-	barrelman.Define(meta.ID, meta).Custom(func(idx *navigator.Index, r *barrelman.Reporter) {
-		walkAllSchemas(idx, func(name string, schema *navigator.Schema, pointer string) {
-			schemaName := nameFromPointer(pointer, name)
-			if looksLikeID(schemaName) && (schema.Type == "integer" || schema.Type == "number") {
-				if sn := SchemaNameFromPointer(pointer); sn != "" {
-					r.At(schema.Loc, "[#804] Identifier schema in Schema Object '%s' must use type string instead of %s", sn, schema.Type)
-				} else {
-					r.At(schema.Loc, "[#804] Identifier schema at %s must use type string instead of %s", pointer, schema.Type)
-				}
-			}
-			switch schema.Type {
-			case "integer":
-				if schema.Format != "int32" && schema.Format != "int64" {
-					if sn := SchemaNameFromPointer(pointer); sn != "" {
-						r.At(schema.Loc, "[#804] Integer property in Schema Object '%s' must declare format int32 or int64", sn)
-					} else {
-						r.At(schema.Loc, "[#804] Integer schema at %s must declare format int32 or int64", pointer)
-					}
-				}
-			case "number":
-				if schema.Format != "float" && schema.Format != "double" {
-					if sn := SchemaNameFromPointer(pointer); sn != "" {
-						r.At(schema.Loc, "[#804] Number property in Schema Object '%s' must declare format float or double", sn)
-					} else {
-						r.At(schema.Loc, "[#804] Number schema at %s must declare format float or double", pointer)
-					}
-				}
-			}
-			for propName, prop := range schema.Properties {
-				if prop == nil {
-					continue
-				}
-				if looksLikeID(propName) && (prop.Type == "integer" || prop.Type == "number") {
-					if sn := SchemaNameFromPointer(pointer); sn != "" {
-						r.At(propertyLoc(prop, schema), "[#804] Identifier property '%s' in Schema Object '%s' must use type string", propName, sn)
-					} else {
-						r.At(propertyLoc(prop, schema), "[#804] Identifier property '%s' at %s must use type string", propName, pointerForProperty(pointer, propName))
-					}
-				}
-			}
-		})
-	}).Register(reg)
-}
-
-func registerSP903RequestIDHeader(reg *barrelman.Registry) {
-	meta := sailpointMeta(903,
-		"Responses must declare the X-Request-Id header.",
-		barrelman.SeverityError,
-		barrelman.CategoryStructure,
-		"Add an X-Request-Id response header to every response definition.",
-	)
-
-	barrelman.Define(meta.ID, meta).Custom(func(idx *navigator.Index, r *barrelman.Reporter) {
-		if !hasSharedRequestIDHeaderComponent(idx.Document) {
-			r.AtRange(barrelman.FileStartRange, "[#903] Components must define a shared X-Request-Id header with type string and format uuid")
-		}
-		for path, item := range idx.Document.Paths {
-			for _, mo := range item.Operations() {
-				for code, resp := range mo.Operation.Responses {
-					header := responseHeader(resp, "X-Request-Id")
-					if header == nil {
-						r.At(headerDiagLoc(resp), "[#903] Response %s for %s %s must declare the X-Request-Id header", code, strings.ToUpper(mo.Method), path)
-						continue
-					}
-					if !requestIDHeaderHasUUIDFormat(idx, header) {
-						r.At(headerDiagLoc(resp), "[#903] X-Request-Id header on response %s for %s %s must use type string with format uuid", code, strings.ToUpper(mo.Method), path)
-					}
-				}
-			}
-		}
-	}).Register(reg)
-}
+// Shared helpers used by multiple per-domain SailPoint files.
 
 func operationParameters(item *navigator.PathItem, op *navigator.Operation) []*navigator.Parameter {
 	params := make([]*navigator.Parameter, 0, len(item.Parameters)+len(op.Parameters))

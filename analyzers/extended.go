@@ -5,15 +5,17 @@ import (
 	navigator "github.com/sailpoint-oss/navigator"
 )
 
+// extended.go registers generic rules that do not have a canonical
+// SailPoint equivalent. Previously duplicative rules (operation-operationId,
+// operation-tags, parameter-description, tag-description) have been
+// retired in favour of the corresponding sailpoint-* analyzer; see
+// analyzers/sailpoint_naming.go and the rulesets/bridge package.
+
 var (
 	operationDescriptionMeta = barrelman.RuleMeta{ID: "operation-description", Description: "Operations should have descriptions.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: true, DocURL: barrelman.DocBaseURL + "operation-description"}
-	operationTagsMeta        = barrelman.RuleMeta{ID: "operation-tags", Description: "Operations should have at least one tag.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: false, DocURL: barrelman.GuidelineDocURL("123")}
-	operationOperationIDMeta = barrelman.RuleMeta{ID: "operation-operationId", Description: "Operations should have operationId.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: false, DocURL: barrelman.GuidelineDocURL("122")}
 	infoDescriptionMeta      = barrelman.RuleMeta{ID: "info-description", Description: "Info should have a description.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: true, DocURL: barrelman.DocBaseURL + "info-description"}
 	infoContactMeta          = barrelman.RuleMeta{ID: "info-contact", Description: "Info should have contact information.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: true, DocURL: barrelman.DocBaseURL + "info-contact"}
 	infoLicenseMeta          = barrelman.RuleMeta{ID: "info-license", Description: "Info should have license information.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: true, DocURL: barrelman.DocBaseURL + "info-license"}
-	tagDescriptionMeta       = barrelman.RuleMeta{ID: "tag-description", Description: "Tags should have descriptions.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: true, DocURL: barrelman.DocBaseURL + "tag-description"}
-	parameterDescriptionMeta = barrelman.RuleMeta{ID: "parameter-description", Description: "Parameters should have descriptions.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: false, DocURL: barrelman.GuidelineDocURL("115")}
 	responseDescriptionMeta  = barrelman.RuleMeta{ID: "response-description", Description: "Responses should have descriptions.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: true, DocURL: barrelman.DocBaseURL + "response-description"}
 	schemaDescriptionMeta    = barrelman.RuleMeta{ID: "schema-description", Description: "Component schemas should have descriptions.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: false, DocURL: barrelman.DocBaseURL + "schema-description"}
 )
@@ -23,22 +25,6 @@ func registerExtendedAnalyzers(reg *barrelman.Registry) {
 		func(path, method string, op *navigator.Operation, r *barrelman.Reporter) {
 			if op.Description.Text == "" {
 				r.At(op.Loc, "Operation %s %s should have a description", method, path)
-			}
-		},
-	).Register(reg)
-
-	barrelman.Define("operation-tags", operationTagsMeta).Operations(
-		func(path, method string, op *navigator.Operation, r *barrelman.Reporter) {
-			if len(op.Tags) == 0 {
-				r.At(navigator.LocOrFallback(op.TagsLoc, op.Loc), "Operation %s %s should have at least one tag", method, path)
-			}
-		},
-	).Register(reg)
-
-	barrelman.Define("operation-operationId", operationOperationIDMeta).Operations(
-		func(path, method string, op *navigator.Operation, r *barrelman.Reporter) {
-			if op.OperationID == "" {
-				r.At(op.Loc, "Operation %s %s should have an operationId", method, path)
 			}
 		},
 	).Register(reg)
@@ -63,24 +49,6 @@ func registerExtendedAnalyzers(reg *barrelman.Registry) {
 		func(info *navigator.Info, r *barrelman.Reporter) {
 			if info.License == nil {
 				r.At(info.Loc, "Info should have license information")
-			}
-		},
-	).Register(reg)
-
-	barrelman.Define("tag-description", tagDescriptionMeta).Tags(
-		func(tag *navigator.Tag, r *barrelman.Reporter) {
-			if tag.Description.Text == "" {
-				r.At(tag.Loc, "Tag '%s' should have a description", tag.Name)
-			}
-		},
-	).Register(reg)
-
-	barrelman.Define("parameter-description", parameterDescriptionMeta).Operations(
-		func(path, method string, op *navigator.Operation, r *barrelman.Reporter) {
-			for _, p := range op.Parameters {
-				if p.Description.Text == "" && p.Ref == "" {
-					r.At(p.Loc, "Parameter '%s' in %s %s should have a description", p.Name, method, path)
-				}
 			}
 		},
 	).Register(reg)

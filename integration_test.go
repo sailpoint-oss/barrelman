@@ -451,11 +451,11 @@ components:
 		"schema-name-capital",
 		"no-api-key-in-query",
 		"owasp-no-api-keys-in-url",
-		"sp-122",
+		"sailpoint-operation-id-camel-case",
 		"operation-description",
-		"sp-123",
-		"sp-403",
-		"sp-300",
+		"sailpoint-operation-single-tag",
+		"sailpoint-operation-4xx-response",
+		"sailpoint-security-oauth2-required",
 	}
 
 	codes := make(map[string]bool)

@@ -5,27 +5,18 @@ import (
 	navigator "github.com/sailpoint-oss/navigator"
 )
 
-var (
-	serversDefinedMeta = barrelman.RuleMeta{
-		ID:          "oas3-api-servers",
-		Description: "OpenAPI document should define at least one server.",
-		Severity:    barrelman.SeverityWarning,
-		Category:    barrelman.CategoryServers,
-		Recommended: true,
-		HowToFix:    "Add a 'servers' section with at least one server URL.",
-		DocURL:      barrelman.DocBaseURL + "oas3-api-servers",
-	}
-
-	serverURLHTTPSMeta = barrelman.RuleMeta{
-		ID:          "server-url-https",
-		Description: "Server URLs should use HTTPS.",
-		Severity:    barrelman.SeverityWarning,
-		Category:    barrelman.CategoryServers,
-		Recommended: false,
-		HowToFix:    "Change the server URL to use https:// instead of http://.",
-		DocURL:      barrelman.GuidelineDocURL("304"),
-	}
-)
+// server-url-https has been replaced by sailpoint-server-url-https
+// (analyzers/sailpoint_security.go). oas3-api-servers remains as a generic
+// check because no SailPoint guideline covers it.
+var serversDefinedMeta = barrelman.RuleMeta{
+	ID:          "oas3-api-servers",
+	Description: "OpenAPI document should define at least one server.",
+	Severity:    barrelman.SeverityWarning,
+	Category:    barrelman.CategoryServers,
+	Recommended: true,
+	HowToFix:    "Add a 'servers' section with at least one server URL.",
+	DocURL:      barrelman.DocBaseURL + "oas3-api-servers",
+}
 
 func registerServersAnalyzers(reg *barrelman.Registry) {
 	barrelman.Define("oas3-api-servers", serversDefinedMeta).Custom(
@@ -35,19 +26,6 @@ func registerServersAnalyzers(reg *barrelman.Registry) {
 			}
 			if len(idx.Document.Servers) == 0 {
 				r.AtRange(barrelman.FileStartRange, "No servers defined; add a 'servers' section")
-			}
-		},
-	).Register(reg)
-
-	barrelman.Define("server-url-https", serverURLHTTPSMeta).Custom(
-		func(idx *navigator.Index, r *barrelman.Reporter) {
-			if !idx.IsOpenAPI() {
-				return
-			}
-			for _, srv := range idx.Document.Servers {
-				if srv.URL != "" && !isHTTPS(srv.URL) {
-					r.At(srv.URLLoc, "Server URL '%s' should use HTTPS", srv.URL)
-				}
 			}
 		},
 	).Register(reg)

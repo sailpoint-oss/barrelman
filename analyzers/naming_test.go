@@ -54,8 +54,8 @@ components:
 	)
 }
 
-func TestOperationIDUnique(t *testing.T) {
-	rule := registeredRule("operation-operationId-unique")
+func TestSailpointOperationIDUnique(t *testing.T) {
+	rule := registeredRule("sailpoint-operation-id-unique")
 
 	btesting.Run(t, rule,
 		btesting.Case{
@@ -100,9 +100,9 @@ paths:
           description: ok`,
 			Expect: []btesting.Diag{
 				{
-					Code:     "operation-operationId-unique",
+					Code:     "sailpoint-operation-id-unique",
 					Severity: btesting.Error,
-					Message:  "GET /pets",
+					Message:  "already used",
 				},
 			},
 		},

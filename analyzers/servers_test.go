@@ -35,8 +35,8 @@ paths: {}`,
 	)
 }
 
-func TestServerURLHTTPS(t *testing.T) {
-	rule := registeredRule("server-url-https")
+func TestSailpointServerURLHTTPS(t *testing.T) {
+	rule := registeredRule("sailpoint-server-url-https")
 
 	btesting.Run(t, rule,
 		btesting.Case{
@@ -51,7 +51,7 @@ servers:
 			Expect: nil,
 		},
 		btesting.Case{
-			Name: "http server triggers warning",
+			Name: "http server triggers error",
 			Spec: `openapi: "3.0.3"
 info:
   title: Test
@@ -60,7 +60,7 @@ paths: {}
 servers:
   - url: http://api.example.com`,
 			Expect: []btesting.Diag{
-				{Code: "server-url-https", Severity: btesting.Warn},
+				{Code: "sailpoint-server-url-https", Severity: btesting.Error},
 			},
 		},
 	)
