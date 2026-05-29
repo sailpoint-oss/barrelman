@@ -11,8 +11,8 @@
 //  2. Discriminator helper — inspects schemas with a `discriminator`
 //     keyword and reshapes errors so "oneOf failed" issues are rewritten
 //     as "discriminator variant 'X' failed: ..." with a Zod-style path.
-//  3. x- extension keywords — declares known SailPoint extensions so
-//     "unknown keyword" warnings do not fire for x-sailpoint-*.
+//  3. x- extension keywords — treats OpenAPI vendor extensions as extension
+//     keywords so "unknown keyword" warnings do not fire for `x-*`.
 //  4. Format registry — registers the OpenAPI-flavored formats (int32,
 //     int64, float, double, byte, binary, password, date, date-time,
 //     uuid). Most of these are a superset of JSON Schema formats; the

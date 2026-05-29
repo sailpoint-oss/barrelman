@@ -4,10 +4,10 @@ import "testing"
 
 func TestNormalizeGuidelineCode(t *testing.T) {
 	tests := map[string]string{
-		"104":    "sp-104",
-		"sp-104": "sp-104",
-		"#304":   "sp-304",
-		"oops":   "",
+		"104":      "rule-104",
+		"rule-104": "rule-104",
+		"#304":     "rule-304",
+		"oops":     "",
 	}
 	for input, want := range tests {
 		if got := NormalizeGuidelineCode(input); got != want {
@@ -22,9 +22,9 @@ func TestGuidelineDocURL(t *testing.T) {
 		SetGuidelinesBaseURL("")
 	})
 
-	got := GuidelineDocURL("sp-104")
+	got := GuidelineDocURL("rule-104")
 	want := "https://example.com/guidelines/docs/rules/api-contract-and-documentation#104"
 	if got != want {
-		t.Fatalf("GuidelineDocURL(sp-104) = %q, want %q", got, want)
+		t.Fatalf("GuidelineDocURL(rule-104) = %q, want %q", got, want)
 	}
 }

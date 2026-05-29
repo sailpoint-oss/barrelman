@@ -25,11 +25,9 @@ const (
 
 // RuleMeta holds descriptive metadata for a rule.
 //
-// Rule IDs are stable kebab-case slugs. SailPoint guideline rules use the
-// `sailpoint-` namespace (for example "sailpoint-operation-id-unique") and
-// carry the guideline number(s) separately in GuidelineID / GuidelineIDs so
-// the human-readable number survives in documentation URLs without leaking
-// into the rule identifier.
+// Rule IDs are stable kebab-case slugs. Rule packs may attach external
+// guideline numbers in GuidelineID / GuidelineIDs when they need to link
+// diagnostics back to a separate policy document.
 type RuleMeta struct {
 	ID           string
 	Description  string
@@ -39,7 +37,7 @@ type RuleMeta struct {
 	Formats      []navigator.Format
 	HowToFix     string
 	DocURL       string
-	GuidelineID  int   // Primary SailPoint guideline number (0 = not linked).
+	GuidelineID  int   // Primary external guideline number (0 = not linked).
 	GuidelineIDs []int // Additional guideline numbers cited by this rule.
 	VacuumID     string
 	SpectralID   string
@@ -65,6 +63,10 @@ type Rule struct {
 	Meta RuleMeta
 	Run  func(ctx *AnalysisContext) []Diagnostic
 	Fix  FixFunc
+
+	// visitors is populated by RuleBuilder so lint can batch visitor-based rules
+	// into a single document walk while preserving Rule.Run for compatibility.
+	visitors Visitors
 }
 
 // Registry provides thread-safe storage for rule metadata AND built Rule

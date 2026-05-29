@@ -29,9 +29,6 @@ var (
 		DocURL:      barrelman.DocBaseURL + "license-url",
 	}
 
-	// missing-error-responses has been replaced by
-	// sailpoint-operation-4xx-response (analyzers/sailpoint_errors.go).
-
 	responseBodyOnDeleteMeta = barrelman.RuleMeta{
 		ID:          "response-body-on-delete",
 		Description: "DELETE operations typically should not return a response body.",
@@ -51,9 +48,6 @@ var (
 		HowToFix:    "Remove the request body from the GET/HEAD operation. Use query parameters instead.",
 		DocURL:      barrelman.DocBaseURL + "no-request-body-on-get",
 	}
-
-	// missing-pagination has been replaced by
-	// sailpoint-collection-offset-pagination (analyzers/sailpoint_operations.go).
 
 	inconsistentErrorShapeMeta = barrelman.RuleMeta{
 		ID:          "inconsistent-error-shape",

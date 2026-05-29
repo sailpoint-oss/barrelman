@@ -3,8 +3,8 @@ package analyzers
 import (
 	"strings"
 
-	navigator "github.com/sailpoint-oss/navigator"
 	"github.com/sailpoint-oss/barrelman"
+	navigator "github.com/sailpoint-oss/navigator"
 )
 
 var (
@@ -143,7 +143,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 					}
 				}
 				if !hasRateLimit {
-					r.At(headerDiagLoc(resp), "Response %s for %s %s should include rate limit headers", code, strings.ToUpper(method), path)
+					r.At(HeaderDiagLoc(resp), "Response %s for %s %s should include rate limit headers", code, strings.ToUpper(method), path)
 				}
 			}
 		},
@@ -233,7 +233,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 			if idx.Document.ParsedVersion != navigator.Version31 && idx.Document.ParsedVersion != navigator.Version32 {
 				return
 			}
-			walkAllSchemas(idx, func(name string, schema *navigator.Schema, pointer string) {
+			WalkAllSchemas(idx, func(name string, schema *navigator.Schema, pointer string) {
 				if schema.Type == "object" && len(schema.Properties) > 0 &&
 					schema.UnevaluatedProperties == nil && !schema.UnevaluatedPropertiesFalse {
 					r.At(schema.Loc, "%s should set unevaluatedProperties to false", InferContextFromPointer(pointer))
@@ -247,7 +247,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 			if idx.Document.ParsedVersion != navigator.Version31 && idx.Document.ParsedVersion != navigator.Version32 {
 				return
 			}
-			walkAllSchemas(idx, func(name string, schema *navigator.Schema, pointer string) {
+			WalkAllSchemas(idx, func(name string, schema *navigator.Schema, pointer string) {
 				if schema.UnevaluatedProperties != nil && schema.MaxProperties == nil {
 					r.At(schema.Loc, "%s with unevaluatedProperties schema should define maxProperties", InferContextFromPointer(pointer))
 				}
@@ -266,7 +266,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 					return
 				}
 			}
-			r.At(headerDiagLoc(resp), "429 response for %s %s should include Retry-After header", strings.ToUpper(method), path)
+			r.At(HeaderDiagLoc(resp), "429 response for %s %s should include Retry-After header", strings.ToUpper(method), path)
 		},
 	).Register(reg)
 
@@ -294,7 +294,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 			if idx.Document.ParsedVersion != navigator.Version31 && idx.Document.ParsedVersion != navigator.Version32 {
 				return
 			}
-			walkAllSchemas(idx, func(name string, schema *navigator.Schema, pointer string) {
+			WalkAllSchemas(idx, func(name string, schema *navigator.Schema, pointer string) {
 				if schema.Type != "integer" {
 					return
 				}
@@ -312,7 +312,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 			if idx.Document.ParsedVersion != navigator.Version20 && idx.Document.ParsedVersion != navigator.Version30 {
 				return
 			}
-			walkAllSchemas(idx, func(name string, schema *navigator.Schema, pointer string) {
+			WalkAllSchemas(idx, func(name string, schema *navigator.Schema, pointer string) {
 				if schema.Type == "integer" && (schema.Minimum == nil || schema.Maximum == nil) {
 					r.At(schema.Loc, "Integer schema in %s should define minimum and maximum", InferContextFromPointer(pointer))
 				}
@@ -377,7 +377,7 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 					}
 				}
 				if !hasCORS {
-					r.At(headerDiagLoc(resp), "Response %s for %s %s should define Access-Control-Allow-Origin header", code, strings.ToUpper(method), path)
+					r.At(HeaderDiagLoc(resp), "Response %s for %s %s should define Access-Control-Allow-Origin header", code, strings.ToUpper(method), path)
 				}
 			}
 		},
@@ -436,7 +436,12 @@ func registerOWASPAnalyzers(reg *barrelman.Registry) {
 	).Register(reg)
 }
 
-func walkAllSchemas(idx *navigator.Index, fn func(name string, schema *navigator.Schema, pointer string)) {
+// WalkAllSchemas iterates every schema reachable from the document index
+// (components, parameters, request bodies, responses) and invokes fn with a
+// human-readable name, the schema node, and a JSON-pointer-like location
+// string. Exposed so downstream rule packs can share the same traversal
+// without forking it.
+func WalkAllSchemas(idx *navigator.Index, fn func(name string, schema *navigator.Schema, pointer string)) {
 	doc := idx.Document
 	if doc.Components != nil {
 		for name, schema := range doc.Components.Schemas {
@@ -468,7 +473,10 @@ func walkAllSchemas(idx *navigator.Index, fn func(name string, schema *navigator
 	}
 }
 
-func headerDiagLoc(resp *navigator.Response) navigator.Loc {
+// HeaderDiagLoc returns the best diagnostic location for a header-related
+// finding on resp, falling back from HeadersLoc to CodeLoc to Loc. Exposed
+// for downstream rule packs.
+func HeaderDiagLoc(resp *navigator.Response) navigator.Loc {
 	if resp.HeadersLoc.Range != (barrelman.Range{}) {
 		return resp.HeadersLoc
 	}

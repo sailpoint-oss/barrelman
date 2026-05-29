@@ -7,9 +7,7 @@ import (
 	navigator "github.com/sailpoint-oss/navigator"
 )
 
-// naming.go registers generic naming rules that are not backed by a
-// specific SailPoint guideline. Rules that previously lived here but now
-// belong to sailpoint-operation-id-* live in analyzers/sailpoint_naming.go.
+// naming.go registers generic naming rules.
 
 var (
 	schemaNameCapitalMeta = barrelman.RuleMeta{

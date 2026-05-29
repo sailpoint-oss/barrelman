@@ -54,61 +54,6 @@ components:
 	)
 }
 
-func TestSailpointOperationIDUnique(t *testing.T) {
-	rule := registeredRule("sailpoint-operation-id-unique")
-
-	btesting.Run(t, rule,
-		btesting.Case{
-			Name: "unique operationIds pass",
-			Spec: `openapi: "3.0.3"
-info:
-  title: Test
-  version: "1.0"
-paths:
-  /pets:
-    get:
-      operationId: listPets
-      responses:
-        "200":
-          description: ok
-  /users:
-    get:
-      operationId: listUsers
-      responses:
-        "200":
-          description: ok`,
-			Expect: nil,
-		},
-		btesting.Case{
-			Name: "duplicate operationId triggers error",
-			Spec: `openapi: "3.0.3"
-info:
-  title: Test
-  version: "1.0"
-paths:
-  /pets:
-    get:
-      operationId: listItems
-      responses:
-        "200":
-          description: ok
-  /users:
-    get:
-      operationId: listItems
-      responses:
-        "200":
-          description: ok`,
-			Expect: []btesting.Diag{
-				{
-					Code:     "sailpoint-operation-id-unique",
-					Severity: btesting.Error,
-					Message:  "already used",
-				},
-			},
-		},
-	)
-}
-
 func TestTagsFormat(t *testing.T) {
 	rule := registeredRule("tags-format")
 

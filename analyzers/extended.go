@@ -5,11 +5,7 @@ import (
 	navigator "github.com/sailpoint-oss/navigator"
 )
 
-// extended.go registers generic rules that do not have a canonical
-// SailPoint equivalent. Previously duplicative rules (operation-operationId,
-// operation-tags, parameter-description, tag-description) have been
-// retired in favour of the corresponding sailpoint-* analyzer; see
-// analyzers/sailpoint_naming.go and the rulesets/bridge package.
+// extended.go registers generic documentation rules.
 
 var (
 	operationDescriptionMeta = barrelman.RuleMeta{ID: "operation-description", Description: "Operations should have descriptions.", Severity: barrelman.SeverityWarning, Category: barrelman.CategoryDocumentation, Recommended: true, DocURL: barrelman.DocBaseURL + "operation-description"}

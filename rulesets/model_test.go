@@ -208,7 +208,7 @@ func TestRuleDefinition_UnmarshalYAML_InRulesMap(t *testing.T) {
 rules:
   info-contact: error
   info-description: false
-  sailpoint-operation-single-tag:
+  operation-tags:
     severity: warn
     description: "Provide a tag for every operation"
   custom-rule: ["hint", {"message": "check this"}]
@@ -230,14 +230,14 @@ rules:
 		t.Errorf("info-description severity = %q, want %q", def.Severity, "off")
 	}
 
-	if def, ok := rs.Rules["sailpoint-operation-single-tag"]; !ok {
-		t.Error("sailpoint-operation-single-tag not found in rules")
+	if def, ok := rs.Rules["operation-tags"]; !ok {
+		t.Error("operation-tags not found in rules")
 	} else {
 		if def.Severity != "warn" {
-			t.Errorf("sailpoint-operation-single-tag severity = %q, want %q", def.Severity, "warn")
+			t.Errorf("operation-tags severity = %q, want %q", def.Severity, "warn")
 		}
 		if def.Description != "Provide a tag for every operation" {
-			t.Errorf("sailpoint-operation-single-tag description = %q, want %q", def.Description, "Provide a tag for every operation")
+			t.Errorf("operation-tags description = %q, want %q", def.Description, "Provide a tag for every operation")
 		}
 	}
 

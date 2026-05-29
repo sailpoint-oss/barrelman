@@ -9,23 +9,18 @@ import (
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
-// Operation4xxResponse implements the Fix for
-// sailpoint-operation-4xx-response: inserts a 400 response referencing
-// the shared ProblemDetails component when no 4xx code exists.
+// Operation4xxResponse inserts a 400 response referencing the shared
+// ProblemDetails component when no 4xx code exists.
 func Operation4xxResponse(ctx *codemod.FixContext, diag barrelman.Diagnostic) ([]codemod.Patch, error) {
 	return insertStatusResponse(ctx, diag, "400", "Bad request")
 }
 
-// Operation401Response implements the Fix for
-// sailpoint-operation-401-response: inserts a 401 response when
-// absent.
+// Operation401Response inserts a 401 response when absent.
 func Operation401Response(ctx *codemod.FixContext, diag barrelman.Diagnostic) ([]codemod.Patch, error) {
 	return insertStatusResponse(ctx, diag, "401", "Unauthorized")
 }
 
-// Operation403Response implements the Fix for
-// sailpoint-operation-403-response: inserts a 403 response when
-// absent.
+// Operation403Response inserts a 403 response when absent.
 func Operation403Response(ctx *codemod.FixContext, diag barrelman.Diagnostic) ([]codemod.Patch, error) {
 	return insertStatusResponse(ctx, diag, "403", "Forbidden")
 }
@@ -66,8 +61,7 @@ func insertStatusResponse(ctx *codemod.FixContext, diag barrelman.Diagnostic, co
 }
 
 // quotedStatus always quotes the status code in YAML to avoid parsers
-// interpreting it as an integer key. SailPoint specs consistently
-// quote status codes; doing so matches the surrounding style.
+// interpreting it as an integer key.
 func quotedStatus(code string) string {
 	return "\"" + code + "\""
 }

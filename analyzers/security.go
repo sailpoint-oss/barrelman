@@ -26,9 +26,6 @@ var (
 		DocURL:      barrelman.DocBaseURL + "oauth-flow-urls",
 	}
 
-	// security-global-or-operation has been replaced by
-	// sailpoint-operation-security-required (analyzers/sailpoint_security.go).
-
 	securitySchemesDefinedMeta = barrelman.RuleMeta{
 		ID:          "security-schemes-defined",
 		Description: "Security requirements must reference defined security schemes.",

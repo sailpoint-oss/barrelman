@@ -9,10 +9,8 @@ import (
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
-// XRequestIDSharedComponent implements the Fix for
-// sailpoint-x-request-id-shared-component: adds
-// components.headers.X-Request-Id with the canonical shape when
-// absent.
+// XRequestIDSharedComponent adds components.headers.X-Request-Id with the
+// canonical shape when absent.
 func XRequestIDSharedComponent(ctx *codemod.FixContext, diag barrelman.Diagnostic) ([]codemod.Patch, error) {
 	headers := componentsHeadersMapping(ctx)
 	if headers == nil {
@@ -33,9 +31,8 @@ func XRequestIDSharedComponent(ctx *codemod.FixContext, diag barrelman.Diagnosti
 	return []codemod.Patch{patch}, nil
 }
 
-// XRequestIDHeader implements the Fix for
-// sailpoint-x-request-id-header: adds X-Request-Id to the response's
-// headers mapping as a $ref to the shared component.
+// XRequestIDHeader adds X-Request-Id to the response's headers mapping as a
+// $ref to the shared component.
 //
 // When the response has no headers: key, inserts one containing the
 // X-Request-Id reference.
@@ -71,11 +68,9 @@ func XRequestIDHeader(ctx *codemod.FixContext, diag barrelman.Diagnostic) ([]cod
 	return []codemod.Patch{patch}, nil
 }
 
-// XRequestIDUUID implements the Fix for sailpoint-x-request-id-uuid:
-// when the shared X-Request-Id header's schema is `type: string`
-// without `format: uuid`, inserts `format: uuid` next to `type:`.
-// Does not touch schemas that already declare any `format`
-// (ambiguous; leave for humans).
+// XRequestIDUUID inserts `format: uuid` next to `type:` when the shared
+// X-Request-Id header's schema is `type: string` without a format. Does not
+// touch schemas that already declare any format.
 func XRequestIDUUID(ctx *codemod.FixContext, diag barrelman.Diagnostic) ([]codemod.Patch, error) {
 	schemaMapping := xRequestIDSchemaMapping(ctx)
 	if schemaMapping == nil {

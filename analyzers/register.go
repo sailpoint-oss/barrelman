@@ -4,13 +4,15 @@ import (
 	"github.com/sailpoint-oss/barrelman"
 )
 
-// RegisterAll registers all semantic analyzers on the given registry. Each rule's
-// Define().Register() call handles both metadata registration and analyzer
-// registration. All rules are registered unconditionally; filtering is handled
-// by the DiagnosticTransformer.
-func RegisterAll(reg *barrelman.Registry) {
+// RegisterGeneric registers every analyzer that is part of Barrelman's
+// generic OpenAPI lint surface — naming, structure, OWASP, schema typing,
+// references, markdown, etc. These rules are vendor-neutral and ship in
+// the public Barrelman release.
+//
+// Org-specific rule packs are NOT registered here. Downstream consumers
+// attach them via barrelman.RegisterPlugin and barrelman.ApplyPlugins.
+func RegisterGeneric(reg *barrelman.Registry) {
 	registerUnresolvedRef(reg)
-	registerSailPointAnalyzers(reg)
 	registerNamingAnalyzers(reg)
 	registerDocumentationAnalyzers(reg)
 	registerStructureAnalyzers(reg)
@@ -26,4 +28,15 @@ func RegisterAll(reg *barrelman.Registry) {
 	registerCompletenessAnalyzers(reg)
 	registerExampleValidationAnalyzers(reg)
 	registerMigrationAnalyzers(reg)
+}
+
+// RegisterAll calls RegisterGeneric and then ApplyPlugins so callers that
+// want the full "everything registered" behaviour continue to work when
+// external rule packs are present.
+//
+// Downstream consumers register a RulePack via barrelman.RegisterPlugin and
+// ApplyPlugins picks it up here.
+func RegisterAll(reg *barrelman.Registry) {
+	RegisterGeneric(reg)
+	barrelman.ApplyPlugins(reg)
 }

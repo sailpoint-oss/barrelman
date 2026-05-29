@@ -1,14 +1,14 @@
 # Barrelman
 
-Navigator-backed static linting and diagnostic packaging for the workspace toolchain.
+Navigator-backed static linting and diagnostic packaging for the workspace toolchain. Barrelman ships the generic OpenAPI rule families (OAS structural parity, naming, documentation, structure, types, security, servers, paths, OWASP, references, syntax) and exposes a `RulePack` plug-in interface so downstream consumers can attach branded rule packs without forking.
 
 ## Toolchain role
 
 Barrelman sits one layer above `navigator`:
 
 - `navigator` owns parsing, typed OpenAPI and Arazzo document models, `$ref` indexes, workspace resolution primitives, and parse-time issues.
-- `barrelman` owns rule execution, rulesets, severities, filtering, and diagnostic shaping.
-- `telescope` and other consumers run Barrelman to surface lint output in editors, CI, and reports.
+- `barrelman` owns generic rule execution, rulesets, severities, filtering, diagnostic shaping, and the public plug-in surface.
+- `telescope` and other consumers run Barrelman to surface lint output in editors, CI, and reports. Branded rule packs (vendor-specific guideline families) live in downstream consumers and attach via the plug-in interface.
 
 Barrelman does **not** own the parser or the canonical structural validator. The built-in `oas3-schema` rule maps Navigator issues into Barrelman diagnostics so downstream tools see one consistent structural-validation story. If Arazzo-specific lint rules are added, they should follow the same split: Navigator for document loading and schema correctness, Barrelman for static rule execution on top.
 
@@ -22,6 +22,46 @@ Barrelman does **not** own the parser or the canonical structural validator. The
 If you call the root package directly and want a specific executable rule set, pass `LintOptions.Rules` explicitly or register rules into `DefaultRegistry` from the `analyzers` and `checks` packages before relying on built-in rulesets.
 
 Navigator-owned structural and meta issues flow through Barrelman via the built-in `oas3-schema` rule. The rule ID is legacy OpenAPI-shaped for compatibility, but the diagnostics now describe the underlying document family through Navigator issue metadata so OpenAPI and Arazzo can share the same structural bridge.
+
+## Plug-in interface (`barrelman.RulePack`)
+
+Downstream consumers attach extra rules at startup without forking Barrelman:
+
+```go
+type RulePack interface {
+    Name() string
+    Register(reg *Registry)
+}
+
+func RegisterPlugin(p RulePack)
+func ApplyPlugins(reg *Registry)
+```
+
+A consumer package registers its pack from `init()`:
+
+```go
+package mybrand
+
+import "github.com/sailpoint-oss/barrelman"
+
+type Pack struct{}
+func (Pack) Name() string                       { return "mybrand" }
+func (Pack) Register(reg *barrelman.Registry)   { /* register rules */ }
+
+func init() { barrelman.RegisterPlugin(Pack{}) }
+```
+
+Any binary that blank-imports `mybrand` and calls `analyzers.RegisterAll(reg)` picks up the pack automatically — `RegisterAll` calls `ApplyPlugins` after loading Barrelman's generic analyzers.
+
+If you want a plug-in-free build, call `analyzers.RegisterGeneric(reg)` instead.
+
+### Exported helper functions
+
+Downstream packs often need the same traversal helpers Barrelman uses internally:
+
+- `analyzers.SchemaNameFromPointer` — recover a schema name from a JSON-pointer-like path.
+- `analyzers.WalkAllSchemas` — iterate every schema reachable from a document index.
+- `analyzers.HeaderDiagLoc` — best diagnostic location for a header-related finding.
 
 ## Config And Rulesets
 
@@ -88,5 +128,16 @@ This keeps `go.mod` pins clean while you iterate on shared contracts.
 - Need parse/index/ref/model access: use `navigator`.
 - Need rule execution or CI/editor diagnostics: use `barrelman`.
 - Need LSP, code actions, or editor workflows: use `telescope`.
+- Need vendor-branded guideline rules (e.g. an organisation-specific naming family): implement them in a downstream consumer and register via `barrelman.RegisterPlugin`. They should NOT live in this repository.
 
 See `navigator/TOOLCHAIN_BOUNDARIES.md` in the sibling workspace for the full cross-repo contract.
+
+## Related Repositories
+
+This repo is part of a six-repo OpenAPI toolchain:
+
+- [tree-sitter-openapi](https://github.com/sailpoint-oss/tree-sitter-openapi) — grammar and tree-sitter bindings
+- [navigator](https://github.com/sailpoint-oss/navigator) — parse, index, `$ref` resolution, document validation
+- [cartographer](https://github.com/sailpoint-oss/cartographer) — source-to-OpenAPI extractor for Go, Java, TypeScript, Python, C#
+- [telescope](https://github.com/sailpoint-oss/telescope) — VS Code extension, language server, and CLI built on the above
+- [barometer](https://github.com/sailpoint-oss/barometer) — live HTTP contract testing and Arazzo runner

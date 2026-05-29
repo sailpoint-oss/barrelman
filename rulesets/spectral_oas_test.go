@@ -15,12 +15,12 @@ func TestSpectralToTelescopeID_MappedRules(t *testing.T) {
 		{"oas3-unused-component", "unused-component"},
 		{"no-eval-in-markdown", "description-markdown"},
 		{"no-script-tags-in-markdown", "description-html"},
-		{"operation-operationId", "sailpoint-operation-id-camel-case"},
-		{"operation-operationId-unique", "sailpoint-operation-id-unique"},
-		{"operation-tags", "sailpoint-operation-single-tag"},
-		{"tag-description", "sailpoint-tag-documented"},
-		{"parameter-description", "sailpoint-parameter-description"},
-		{"oas3-operation-security-defined", "sailpoint-operation-security-required"},
+		{"operation-operationId", "operation-operationId"},
+		{"operation-operationId-unique", "operation-operationId-unique"},
+		{"operation-tags", "operation-tags"},
+		{"tag-description", "tag-description"},
+		{"parameter-description", "parameter-description"},
+		{"oas3-operation-security-defined", "oas3-operation-security-defined"},
 		{"oas3-schema", "oas3-schema"},
 		{"oas3-valid-media-example", "oas3-valid-media-example"},
 		{"oas3-valid-schema-example", "oas3-valid-schema-example"},
@@ -56,11 +56,11 @@ func TestTelescopeToSpectralID_MappedRules(t *testing.T) {
 		{"info-contact", "info-contact"},
 		{"oas3-schema", "oas3-schema"},
 		{"oas3-api-servers", "oas3-api-servers"},
-		{"sailpoint-operation-id-camel-case", "operation-operationId"},
-		{"sailpoint-operation-id-unique", "operation-operationId-unique"},
-		{"sailpoint-operation-single-tag", "operation-tags"},
-		{"sailpoint-tag-documented", "tag-description"},
-		{"sailpoint-parameter-description", "parameter-description"},
+		{"operation-operationId", "operation-operationId"},
+		{"operation-operationId-unique", "operation-operationId-unique"},
+		{"operation-tags", "operation-tags"},
+		{"tag-description", "tag-description"},
+		{"parameter-description", "parameter-description"},
 	}
 
 	for _, tt := range tests {
@@ -86,9 +86,6 @@ func TestIsNativeRule(t *testing.T) {
 		"info-description",
 		"info-license",
 		"operation-description",
-		"operation-operationId",
-		"operation-operationId-unique",
-		"operation-tags",
 		"path-keys-no-trailing-slash",
 		"path-declarations-must-exist",
 		"path-params",
@@ -96,14 +93,11 @@ func TestIsNativeRule(t *testing.T) {
 		"no-script-tags-in-markdown",
 		"oas3-api-servers",
 		"oas3-schema",
-		"tag-description",
-		"parameter-description",
 		"oas3-unused-component",
 		"contact-properties",
 		"license-url",
 		"oas3-valid-media-example",
 		"oas3-valid-schema-example",
-		"oas3-operation-security-defined",
 	}
 
 	for _, id := range nativeRules {
@@ -143,7 +137,7 @@ func TestGetSpectralBuiltin_OAS(t *testing.T) {
 	}
 
 	// Verify each spectralOASDefaults entry resolves to a rule in the set,
-	// using the canonical SailPoint slug when bridged.
+	// using the native Barrelman rule id where one exists.
 	for spectralID, expectedSev := range spectralOASDefaults {
 		canonical := SpectralToTelescopeID(spectralID)
 		def, ok := rs.Rules[canonical]

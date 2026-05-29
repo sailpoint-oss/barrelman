@@ -444,6 +444,9 @@ components:
 
 	diags := lintYAML(t, spec)
 
+	// Only generic rules are expected here. The org-specific rule family
+	// formerly registered alongside these moved to a downstream plug-in
+	// and is exercised by that consumer's tests, not by barrelman itself.
 	expected := []string{
 		"info-description",
 		"info-contact",
@@ -451,11 +454,7 @@ components:
 		"schema-name-capital",
 		"no-api-key-in-query",
 		"owasp-no-api-keys-in-url",
-		"sailpoint-operation-id-camel-case",
 		"operation-description",
-		"sailpoint-operation-single-tag",
-		"sailpoint-operation-4xx-response",
-		"sailpoint-security-oauth2-required",
 	}
 
 	codes := make(map[string]bool)

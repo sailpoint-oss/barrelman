@@ -46,8 +46,7 @@ type Patch struct {
 	// blocks. Example: "insert description: TODO on parameter 'limit'".
 	Description string
 
-	// RuleID is the canonical rule slug (for example
-	// "sailpoint-parameter-description") the patch was produced for.
+	// RuleID is the canonical rule slug the patch was produced for.
 	// Used for waiver lookup, stats, and LSP action grouping.
 	RuleID string
 }

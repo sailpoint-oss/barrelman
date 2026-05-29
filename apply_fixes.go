@@ -67,11 +67,18 @@ func ApplyFixes(files []string, opts FixOptions) ([]FixResult, error) {
 
 	out := make([]FixResult, 0, len(lintResults))
 	for _, lr := range lintResults {
-		content, err := os.ReadFile(lr.File)
-		if err != nil {
-			return nil, fmt.Errorf("read %s: %w", lr.File, err)
+		content := lr.content
+		if content == nil {
+			var err error
+			content, err = os.ReadFile(lr.File)
+			if err != nil {
+				return nil, fmt.Errorf("read %s: %w", lr.File, err)
+			}
 		}
-		idx := navigator.ParseContent(content, lr.URI)
+		idx := lr.index
+		if idx == nil {
+			idx = navigator.ParseContent(content, lr.URI)
+		}
 		fixCtx := &codemod.FixContext{
 			Index:  idx,
 			Source: content,

@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	// DefaultGuidelinesBaseURL is the published SailPoint API Guidelines site.
-	DefaultGuidelinesBaseURL = "https://sailpoint-oss.github.io/sailpoint-api-guidelines/"
+	// DefaultGuidelinesBaseURL is the published generic guideline docs base URL.
+	DefaultGuidelinesBaseURL = "https://telescope.dev/guidelines/"
 	// GuidelinesBaseURLEnvVar lets local runs override the published site.
 	GuidelinesBaseURLEnvVar = "TELESCOPE_GUIDELINES_BASE_URL"
 )
@@ -20,7 +20,7 @@ var (
 	guidelinesBaseURL   string
 )
 
-// SetGuidelinesBaseURL overrides the base URL used for SailPoint rule links.
+// SetGuidelinesBaseURL overrides the base URL used for external guideline links.
 // Empty values clear the override and fall back to env/default resolution.
 func SetGuidelinesBaseURL(raw string) {
 	guidelinesBaseURLMu.Lock()
@@ -28,7 +28,7 @@ func SetGuidelinesBaseURL(raw string) {
 	guidelinesBaseURL = normalizeGuidelinesBaseURL(raw)
 }
 
-// GuidelinesBaseURL returns the effective SailPoint guideline docs base URL.
+// GuidelinesBaseURL returns the effective external guideline docs base URL.
 func GuidelinesBaseURL() string {
 	guidelinesBaseURLMu.RLock()
 	override := guidelinesBaseURL
@@ -42,21 +42,21 @@ func GuidelinesBaseURL() string {
 	return DefaultGuidelinesBaseURL
 }
 
-// NormalizeGuidelineCode converts "104" or "sp-104" into "sp-104".
+// NormalizeGuidelineCode converts "104" or "rule-104" into "rule-104".
 func NormalizeGuidelineCode(code string) string {
 	id, ok := parseGuidelineID(code)
 	if !ok {
 		return ""
 	}
-	return fmt.Sprintf("sp-%03d", id)
+	return fmt.Sprintf("rule-%03d", id)
 }
 
-// GuidelineIDFromCode extracts the numeric guideline id from "104" or "sp-104".
+// GuidelineIDFromCode extracts the numeric guideline id from "104" or "rule-104".
 func GuidelineIDFromCode(code string) (int, bool) {
 	return parseGuidelineID(code)
 }
 
-// GuidelineDocURL builds the published SailPoint docs URL for a rule code.
+// GuidelineDocURL builds the published docs URL for a rule code.
 func GuidelineDocURL(code string) string {
 	id, ok := parseGuidelineID(code)
 	if !ok {
@@ -80,7 +80,7 @@ func normalizeGuidelinesBaseURL(raw string) string {
 func parseGuidelineID(code string) (int, bool) {
 	trimmed := strings.ToLower(strings.TrimSpace(code))
 	trimmed = strings.TrimPrefix(trimmed, "#")
-	trimmed = strings.TrimPrefix(trimmed, "sp-")
+	trimmed = strings.TrimPrefix(trimmed, "rule-")
 	if trimmed == "" {
 		return 0, false
 	}

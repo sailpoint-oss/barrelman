@@ -9,9 +9,8 @@ import (
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
-// CollectionOffsetPagination implements the Fix for
-// sailpoint-collection-offset-pagination: appends `limit` and
-// `offset` query parameters to the operation's parameters list.
+// CollectionOffsetPagination appends `limit` and `offset` query parameters to
+// the operation's parameters list.
 //
 // When `parameters:` is absent, inserts it with both parameters.
 // Emits zero patches when both limit and offset are already
@@ -69,10 +68,8 @@ func CollectionOffsetPagination(ctx *codemod.FixContext, diag barrelman.Diagnost
 	return patches, nil
 }
 
-// PathParamRequired implements the Fix for
-// sailpoint-path-param-required: inserts `required: true` on the
-// path parameter's block_mapping. Required by the OAS spec, so the
-// fix is always safe.
+// PathParamRequired inserts `required: true` on the path parameter's
+// block_mapping. Required by the OAS spec, so the fix is always safe.
 func PathParamRequired(ctx *codemod.FixContext, diag barrelman.Diagnostic) ([]codemod.Patch, error) {
 	mapping := mappingForDiagnostic(ctx, diag)
 	if mapping == nil {

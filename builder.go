@@ -127,8 +127,9 @@ func (b *RuleBuilder) Build() Rule {
 	id := b.id
 	fix := b.fix
 	return Rule{
-		ID:   id,
-		Meta: meta,
+		ID:       id,
+		Meta:     meta,
+		visitors: v,
 		Run: func(ctx *AnalysisContext) []Diagnostic {
 			if ctx.Index == nil {
 				return nil

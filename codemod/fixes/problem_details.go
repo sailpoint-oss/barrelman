@@ -9,12 +9,12 @@ import (
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
-// problemDetailsSchemaBody is the canonical RFC 7807 schema with
-// SailPoint's required correlationId extension. Indented here with
-// two-space base; callers re-indent to match their insertion point.
+// problemDetailsSchemaBody is an RFC 7807 schema with a correlationId
+// extension. Indented here with two-space base; callers re-indent to match
+// their insertion point.
 const problemDetailsSchemaBody = `ProblemDetails:
   type: object
-  description: RFC 7807 Problem Details with SailPoint correlationId.
+  description: RFC 7807 Problem Details with correlationId.
   required:
     - type
     - title
@@ -46,10 +46,8 @@ const problemDetailsSchemaBody = `ProblemDetails:
       format: uuid
       description: Unique identifier correlating this response to a server-side trace.`
 
-// ErrorProblemDetailsMediaType implements the Fix for
-// sailpoint-error-problem-details-media-type: adds
-// `application/problem+json:` under the response's `content:` mapping
-// (creating the content key if absent).
+// ErrorProblemDetailsMediaType adds `application/problem+json:` under the
+// response's `content:` mapping, creating the content key if absent.
 func ErrorProblemDetailsMediaType(ctx *codemod.FixContext, diag barrelman.Diagnostic) ([]codemod.Patch, error) {
 	response := mappingForDiagnostic(ctx, diag)
 	if response == nil {
@@ -89,13 +87,9 @@ func ErrorProblemDetailsMediaType(ctx *codemod.FixContext, diag barrelman.Diagno
 	return []codemod.Patch{patch}, nil
 }
 
-// ErrorProblemDetailsSharedComponent implements the Fix for
-// sailpoint-error-problem-details-shared-component: when
-// components.schemas.ProblemDetails is missing, appends the canonical
-// schema under the schemas mapping. When responses reference the
-// schema inline instead of via $ref, this fix does NOT rewrite the
-// response (that falls into the "value mutation" bucket excluded from
-// Phase 2).
+// ErrorProblemDetailsSharedComponent appends the ProblemDetails schema under
+// components.schemas when it is missing. When responses reference the schema
+// inline instead of via $ref, this fix does not rewrite the response.
 func ErrorProblemDetailsSharedComponent(ctx *codemod.FixContext, diag barrelman.Diagnostic) ([]codemod.Patch, error) {
 	schemas := componentsSchemasMapping(ctx)
 	if schemas == nil {
@@ -130,11 +124,10 @@ func ErrorProblemDetailsSharedComponent(ctx *codemod.FixContext, diag barrelman.
 	return []codemod.Patch{patch}, nil
 }
 
-// ErrorCorrelationID implements the Fix for
-// sailpoint-error-correlation-id: adds a correlationId property to the
-// existing ProblemDetails schema when missing. Requires
-// components.schemas.ProblemDetails to already exist; the
-// shared-component fix handles the bootstrap.
+// ErrorCorrelationID adds a correlationId property to the existing
+// ProblemDetails schema when missing. Requires components.schemas.
+// ProblemDetails to already exist; the shared-component fix handles the
+// bootstrap.
 func ErrorCorrelationID(ctx *codemod.FixContext, diag barrelman.Diagnostic) ([]codemod.Patch, error) {
 	problemDetails := problemDetailsSchemaNode(ctx)
 	if problemDetails == nil {

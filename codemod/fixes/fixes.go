@@ -1,8 +1,7 @@
-// Package fixes implements Phase 2 auto-fix hooks for the canonical
-// SailPoint rules in barrelman/analyzers. Each Fix function is
-// deterministic, insertion-only, and idempotent: running it twice
-// produces the same output as running it once, and it emits zero
-// patches when the target fix is already present.
+// Package fixes implements reusable auto-fix hooks. Each Fix function is
+// deterministic, insertion-only, and idempotent: running it twice produces
+// the same output as running it once, and it emits zero patches when the
+// target fix is already present.
 //
 // The helpers here (FindMapping, TodoDescription, etc.) are shared
 // across fix implementations to keep the per-rule files compact.

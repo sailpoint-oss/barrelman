@@ -5,9 +5,6 @@ import (
 	navigator "github.com/sailpoint-oss/navigator"
 )
 
-// server-url-https has been replaced by sailpoint-server-url-https
-// (analyzers/sailpoint_security.go). oas3-api-servers remains as a generic
-// check because no SailPoint guideline covers it.
 var serversDefinedMeta = barrelman.RuleMeta{
 	ID:          "oas3-api-servers",
 	Description: "OpenAPI document should define at least one server.",

@@ -7,12 +7,10 @@ import (
 	"github.com/sailpoint-oss/barrelman/codemod"
 )
 
-// OperationSingleTag implements the Fix for
-// sailpoint-operation-single-tag. When the operation has no `tags:`
-// key, inserts `tags: [TODO]`. When the operation has an empty list
-// or a multi-entry list, the fix declines to patch (the correct
-// single tag cannot be determined deterministically); the diagnostic
-// remains for human attention.
+// OperationSingleTag inserts `tags: [TODO]` when the operation has no `tags:`
+// key. When the operation has an empty list or a multi-entry list, the fix
+// declines to patch because the correct single tag cannot be determined
+// deterministically.
 func OperationSingleTag(ctx *codemod.FixContext, diag barrelman.Diagnostic) ([]codemod.Patch, error) {
 	mapping := mappingForDiagnostic(ctx, diag)
 	if mapping == nil {

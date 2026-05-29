@@ -64,8 +64,7 @@ type Position struct {
 // render them to their own output formats.
 type Issue struct {
 	// Code is the stable identifier for the kind of issue (for example
-	// "type", "enum", "required", or a SailPoint rule slug like
-	// "sailpoint-error-problem-details-shared-component").
+	// "type", "enum", "required", or a custom rule slug.
 	Code string
 
 	// Severity drives display grouping and gate pass/fail decisions.

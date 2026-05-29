@@ -1,7 +1,6 @@
 package bridge
 
 import (
-	"strings"
 	"testing"
 )
 
@@ -23,11 +22,10 @@ func TestCanonical_RoundTripsEveryEntry(t *testing.T) {
 	}
 }
 
-func TestCanonical_NumericAndSPFormats(t *testing.T) {
+func TestCanonical_NumericAndUnknownFormatsPassThrough(t *testing.T) {
 	cases := map[string]string{
-		"304":    "sailpoint-server-url-https",
-		"sp-304": "sailpoint-server-url-https",
-		"#304":   "sailpoint-server-url-https",
+		"304":  "304",
+		"#304": "#304",
 	}
 	for in, want := range cases {
 		if got := Canonical(in); got != want {
@@ -72,30 +70,9 @@ func TestFromCanonical_UnknownReturnsFalse(t *testing.T) {
 	}
 }
 
-func TestForGuideline_ReturnsEveryMatchingEntry(t *testing.T) {
-	// #403 is intentionally split into four rules in the bridge table.
-	entries := ForGuideline(403)
-	if len(entries) != 4 {
-		t.Fatalf("ForGuideline(403) = %d entries, want 4", len(entries))
-	}
-	want := map[string]bool{
-		"sailpoint-operation-method-status-codes": true,
-		"sailpoint-operation-4xx-response":        true,
-		"sailpoint-operation-401-response":        true,
-		"sailpoint-operation-403-response":        true,
-	}
-	for _, e := range entries {
-		if !want[e.Canonical] {
-			t.Errorf("unexpected entry for #403: %s", e.Canonical)
-		}
-	}
-}
-
-func TestEveryCanonicalIsSailpointNamespaced(t *testing.T) {
-	for _, slug := range Canonicals() {
-		if !strings.HasPrefix(slug, "sailpoint-") {
-			t.Errorf("canonical slug %q is not namespaced under sailpoint-", slug)
-		}
+func TestForGuideline_UnknownReturnsEmpty(t *testing.T) {
+	if entries := ForGuideline(403); len(entries) != 0 {
+		t.Fatalf("ForGuideline(403) = %d entries, want 0", len(entries))
 	}
 }
 

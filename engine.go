@@ -15,6 +15,9 @@ type LintResult struct {
 	File        string
 	URI         string
 	Diagnostics []Diagnostic
+
+	content []byte
+	index   *navigator.Index
 }
 
 // LintOptions configures a lint run.
@@ -37,7 +40,7 @@ func LintFiles(files []string, opts LintOptions) ([]LintResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	projects := prepareLintProjects(files)
+	workspace := navigator.NewWorkspace()
 
 	var results []LintResult
 	for _, file := range files {
@@ -60,36 +63,19 @@ func LintFiles(files []string, opts LintOptions) ([]LintResult, error) {
 		uri := fileToURI(file)
 		idx := navigator.ParseContent(content, uri)
 		var resolver CrossRefResolver
-		if project := projects[uri]; project != nil {
+		if idx != nil {
+			project := navigator.OpenProjectFromIndex(uri, idx,
+				navigator.WithCache(workspace.Cache),
+				navigator.WithGraph(workspace.Graph),
+				navigator.WithDiscovery(workspace.Discovery),
+			)
 			resolver = project.Resolver()
 		}
 
+		var lang = languageForContent(uri, content)
 		var tree *tree_sitter.Tree
-		var lang *tree_sitter.Language
 		if idx != nil {
 			tree = idx.Tree()
-		}
-		if tree == nil {
-			format := navigator.DetectFormat(uri, content)
-			parser := tree_sitter.NewParser()
-			switch format {
-			case navigator.FormatJSON:
-				lang = navigator.JSONLanguage()
-			default:
-				lang = navigator.YAMLLanguage()
-			}
-			if err := parser.SetLanguage(lang); err == nil {
-				tree = parser.Parse(content, nil)
-			}
-			parser.Close()
-		} else {
-			format := navigator.DetectFormat(uri, content)
-			switch format {
-			case navigator.FormatJSON:
-				lang = navigator.JSONLanguage()
-			default:
-				lang = navigator.YAMLLanguage()
-			}
 		}
 
 		targetVersion := navigator.Version(opts.TargetVersion)
@@ -108,10 +94,7 @@ func LintFiles(files []string, opts LintOptions) ([]LintResult, error) {
 			TargetVersion: targetVersion,
 		}
 
-		var diags []Diagnostic
-		for _, rule := range allRules {
-			diags = append(diags, applyRuleSeverityOverride(rule.Run(ctx), rule.ID, severityOverrides)...)
-		}
+		diags := runRules(ctx, allRules, severityOverrides)
 
 		if opts.MinSeverity > 0 {
 			diags = filterBySeverity(diags, opts.MinSeverity)
@@ -121,6 +104,8 @@ func LintFiles(files []string, opts LintOptions) ([]LintResult, error) {
 			File:        file,
 			URI:         uri,
 			Diagnostics: diags,
+			content:     content,
+			index:       idx,
 		})
 	}
 	return results, nil
@@ -137,31 +122,9 @@ func LintContent(uri string, content []byte, opts LintOptions) ([]Diagnostic, er
 	idx := navigator.ParseContent(content, uri)
 
 	var tree *tree_sitter.Tree
-	var lang *tree_sitter.Language
+	var lang = languageForContent(uri, content)
 	if idx != nil {
 		tree = idx.Tree()
-	}
-	if tree == nil {
-		format := navigator.DetectFormat(uri, content)
-		parser := tree_sitter.NewParser()
-		switch format {
-		case navigator.FormatJSON:
-			lang = navigator.JSONLanguage()
-		default:
-			lang = navigator.YAMLLanguage()
-		}
-		if err := parser.SetLanguage(lang); err == nil {
-			tree = parser.Parse(content, nil)
-		}
-		parser.Close()
-	} else {
-		format := navigator.DetectFormat(uri, content)
-		switch format {
-		case navigator.FormatJSON:
-			lang = navigator.JSONLanguage()
-		default:
-			lang = navigator.YAMLLanguage()
-		}
 	}
 
 	targetVersion := navigator.Version(opts.TargetVersion)
@@ -179,16 +142,22 @@ func LintContent(uri string, content []byte, opts LintOptions) ([]Diagnostic, er
 		TargetVersion: targetVersion,
 	}
 
-	var diags []Diagnostic
-	for _, rule := range allRules {
-		diags = append(diags, applyRuleSeverityOverride(rule.Run(ctx), rule.ID, severityOverrides)...)
-	}
+	diags := runRules(ctx, allRules, severityOverrides)
 
 	if opts.MinSeverity > 0 {
 		diags = filterBySeverity(diags, opts.MinSeverity)
 	}
 
 	return diags, nil
+}
+
+func languageForContent(uri string, content []byte) *tree_sitter.Language {
+	switch navigator.DetectFormat(uri, content) {
+	case navigator.FormatJSON:
+		return navigator.JSONLanguage()
+	default:
+		return navigator.YAMLLanguage()
+	}
 }
 
 func filterBySeverity(diags []Diagnostic, minSev Severity) []Diagnostic {
